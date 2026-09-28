@@ -1,0 +1,14 @@
+# Store and check out text files with LF on every OS (overrides core.autocrlf).
+* text=auto eol=lf
+
+# Scripts must be LF or bash on the cluster fails with $'\r': command not found
+*.sh  text eol=lf
+*.pbs text eol=lf
+*.py  text eol=lf
+
+# Never touch binary files
+*.h5  binary
+*.pdf binary
+*.png binary
+*.so  binary
+*.o   binary

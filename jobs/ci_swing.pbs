@@ -1,0 +1,46 @@
+#!/bin/bash
+#PBS -N h5zcomp_ci
+#PBS -l select=1:ncpus=8:ngpus=1:mpiprocs=1
+#PBS -l walltime=00:45:00
+#PBS -j oe
+#PBS -A SDR
+#PBS -q gpu
+#
+# Build H5Zcomp against the blob HDF5 and run the whole ctest suite:
+#   -L ci    data-free correctness (round-trips, chunk layouts, errors,
+#            blob+DXPL, plugin autoload)
+#   -L data  Miranda timing (1 chunk and 8 chunks) + a bench smoke run
+#   -L gpu   Hurricane GPU codecs (only with USE_CUDA=1)
+#
+#   qsub jobs/ci_swing.pbs                 # from the repo root
+#   qsub -v USE_CUDA=1 jobs/ci_swing.pbs   # include GPU tests
+set -u
+cd "${PBS_O_WORKDIR:-$(pwd)}"
+[ -f CMakeLists.txt ] || cd ..
+echo "Job started $(date) on $(hostname) in $(pwd)"
+
+source scripts/env.sh
+
+BUILD="build_ci_${PBS_JOBID:-local}"
+h5zc_build "$BUILD" || { echo "ERROR: build failed -- refusing to run stale binaries"; exit 1; }
+
+cd "$BUILD"
+echo; echo "=== ctest -L ci ==="
+ctest -L ci --output-on-failure -j 4
+CI_RC=$?
+
+echo; echo "=== ctest -L data ==="
+ctest -L data --output-on-failure
+DATA_RC=$?
+
+GPU_RC=0
+if [ -n "${USE_CUDA:-}" ]; then
+    echo; echo "=== ctest -L gpu ==="
+    ctest -L gpu --output-on-failure
+    GPU_RC=$?
+fi
+
+echo
+echo "ci=$CI_RC data=$DATA_RC gpu=$GPU_RC"
+echo "Job finished $(date)"
+[ $CI_RC -eq 0 ] && [ $DATA_RC -eq 0 ] && [ $GPU_RC -eq 0 ]

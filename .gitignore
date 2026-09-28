@@ -1,0 +1,7 @@
+build*/
+results/
+*.h5
+*.o
+*.so
+CMakeUserPresets.json
+.vscode/

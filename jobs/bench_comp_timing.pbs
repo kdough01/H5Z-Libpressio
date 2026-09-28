@@ -1,0 +1,82 @@
+#!/bin/bash
+#PBS -N h5zcomp_bench
+#PBS -l select=1:ncpus=16:ngpus=1:mpiprocs=1:mem=256gb
+#PBS -l walltime=04:00:00
+#PBS -j oe
+#PBS -A SDR
+#PBS -q gpu
+#
+# The CompVOL experiment matrix through the H5Zcomp filter. Filter-side twin
+# of the VOL repo's bench_vol_timing.pbs: same datasets, same compressor
+# table, same durability settings, same XCSV columns -- so
+#   scripts/compare_vol_filter.py <vol ext csv> <this ext csv>
+# lines the two up row by row.
+#
+#   qsub jobs/bench_comp_timing.pbs
+#   qsub -v BENCH_ONLY=miranda,s3d,BENCH_COMP=sz3_1e3 jobs/bench_comp_timing.pbs
+#   qsub -v BENCH_CHUNK_N=8 jobs/bench_comp_timing.pbs     # force N for every entry
+#   qsub -v BENCH_REPS=3 jobs/bench_comp_timing.pbs
+#
+# Knobs (env / qsub -v): BENCH_ONLY, BENCH_COMP, BENCH_CHUNK_N, BENCH_REPS,
+# BENCH_FSYNC, BENCH_DROP_CACHE, BENCH_SYNC_DIR, BENCH_TAG, BENCH_DEFLATE=1
+set -u
+cd "${PBS_O_WORKDIR:-$(pwd)}"
+[ -f CMakeLists.txt ] || cd ..
+PROJECT_ROOT=$(pwd)
+echo "Job started $(date) on $(hostname)"
+
+source scripts/env.sh
+
+TAG="${BENCH_TAG:-h5zcomp_${PBS_JOBID:-local}}"
+BUILD="build_${TAG}"
+BIN="$BUILD/bin/bench_comp_timing"
+h5zc_build "$BUILD" || { echo "ERROR: build failed -- refusing to run a stale binary"; exit 1; }
+if [ tests/bench_comp_timing.cc -nt "$BIN" ] || [ src/H5Z_comp.cc -nt "$BUILD/lib/libH5Zcomp.so" ]; then
+    echo "ERROR: binary older than its source"; exit 1
+fi
+
+RESULTS="$PROJECT_ROOT/results/$TAG"
+mkdir -p "$RESULTS" "$H5Z_SCRATCH" || exit 1
+CIFILE="$RESULTS/chunkinfo.csv"
+printf 'dataset,chunk_n,nchunks_actual,chunk_elems,chunk_bytes\n' > "$CIFILE"
+git log -1 --format='H5Z-Libpressio %H %s' > "$RESULTS/provenance.txt" 2>/dev/null
+cat "$HDF5_BLOB/HDF5_BLOB_COMMIT" >> "$RESULTS/provenance.txt" 2>/dev/null
+env | grep -E '^BENCH_|^H5ZCOMP_' >> "$RESULTS/provenance.txt"
+
+export HDF5_PLUGIN_PATH="$PROJECT_ROOT/$BUILD/lib"
+export BENCH_CHUNKINFO="$CIFILE"
+
+echo; echo "=== matrix / availability ==="
+"$BIN" --list | tee "$RESULTS/matrix.txt"
+
+ARGS=(--h5 "$H5Z_SCRATCH/bench_${TAG}.h5"
+      --out "$RESULTS/results_h5zcomp.csv" --ext "$RESULTS/results_h5zcomp_ext.csv")
+[ -n "${BENCH_ONLY:-}" ]    && ARGS+=(--only "$BENCH_ONLY")
+[ -n "${BENCH_COMP:-}" ]    && ARGS+=(--comp "$BENCH_COMP")
+[ -n "${BENCH_CHUNK_N:-}" ] && ARGS+=(--chunk-n "$BENCH_CHUNK_N")
+[ -n "${BENCH_REPS:-}" ]    && ARGS+=(--reps "$BENCH_REPS")
+[ "${BENCH_DEFLATE:-0}" = 1 ] && ARGS+=(--deflate)
+
+echo; echo "=== bench_comp_timing ${ARGS[*]} ==="
+"$BIN" "${ARGS[@]}" | tee "$RESULTS/bench_stdout.txt"
+RC=${PIPESTATUS[0]}
+rm -f "$H5Z_SCRATCH/bench_${TAG}.h5"
+
+X="$RESULTS/results_h5zcomp_ext.csv"
+echo
+echo "=== summary (ratio / write / read, successful rows) ==="
+printf "%-12s %-18s %-5s %6s %9s %11s %11s %6s\n" dataset compressor kind N ratio write_ms read_ms ok
+awk -F, 'FNR>1 && $5!="-1" {printf "%-12s %-18s %-5s %6s %9.3f %11.2f %11.2f %6s\n",$1,$2,$3,$4,$8,$10,$17,$21}' "$X"
+
+echo
+echo "=== recorded failures (rep=-1) -- e.g. a single chunk > 4 GiB ==="
+awk -F, 'FNR>1 && $5=="-1" {print "  "$1" "$2" N="$4}' "$X"
+
+echo
+echo "=== fidelity violations (bound_ok=0) ==="
+awk -F, 'FNR>1 && $5!="-1" && $21=="0" {print "  [FAIL] "$1" "$2" N="$4" maxae="$20" thr="$19}' "$X"
+
+echo
+echo "results: $RESULTS   (rc=$RC)"
+echo "Job finished $(date)"
+exit $RC

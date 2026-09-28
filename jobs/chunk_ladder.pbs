@@ -1,0 +1,99 @@
+#!/bin/bash
+#PBS -N h5zcomp_chunks
+#PBS -l select=1:ncpus=16:ngpus=1:mpiprocs=1:mem=256gb
+#PBS -l walltime=02:00:00
+#PBS -j oe
+#PBS -A SDR
+#PBS -q gpu
+#
+# Chunk-count ladder for one dataset x one compressor through H5Zcomp. Port of
+# the VOL repo's filter_test_swing.pbs (which drove the native H5Z-SZ3 filter):
+# ratio and time vs chunk size, the 4 GiB single-chunk wall recorded as rep=-1,
+# and a correctness gate before the sweep.
+#
+#   qsub -v BENCH_DATASET=s3d,BENCH_COMP=sz3_1e3 jobs/chunk_ladder.pbs
+#   qsub -v BENCH_DATASET=miranda,BENCH_COMP=zfp_cpu_r8,BENCH_CHUNKS="1 8 64 512" jobs/chunk_ladder.pbs
+#
+# NOTE on columns: this uses the 24-column XCSV (abs_thresh=$19, maxae=$20,
+# bound_ok=$21). The VOL repo's filter_test_swing.pbs gate still reads $16/$17,
+# which are open_ms/read_ms in the current schema.
+set -u
+DATASET="${BENCH_DATASET:-miranda}"
+COMP="${BENCH_COMP:-sz3_1e3}"
+CHUNK_COUNTS="${BENCH_CHUNKS:-1 2 4 8 16 32 64 128 512 1024 2048 4096 8192 16384 32768 65536}"
+TAG="${BENCH_TAG:-${DATASET}_${COMP}}"
+
+cd "${PBS_O_WORKDIR:-$(pwd)}"
+[ -f CMakeLists.txt ] || cd ..
+PROJECT_ROOT=$(pwd)
+echo "Job started $(date) on $(hostname)"
+echo "Dataset: $DATASET  comp: $COMP  ladder: $CHUNK_COUNTS"
+
+source scripts/env.sh
+
+BUILD="build_${TAG}"
+BIN="$BUILD/bin/bench_comp_timing"
+h5zc_build "$BUILD" || { echo "ERROR: build failed -- refusing to run a stale binary"; exit 1; }
+
+RESULTS="$PROJECT_ROOT/results/ladder_${TAG}"
+mkdir -p "$RESULTS" "$H5Z_SCRATCH"
+CIFILE="$RESULTS/chunkinfo.csv"
+printf 'dataset,chunk_n,nchunks_actual,chunk_elems,chunk_bytes\n' > "$CIFILE"
+export HDF5_PLUGIN_PATH="$PROJECT_ROOT/$BUILD/lib"
+
+run_filter () {
+    local runtag="$1" ds="$2" n="$3" comp="$4"
+    local label="${runtag}_${comp}_N${n}"
+    local h5="$H5Z_SCRATCH/h5zcomp_${label}.h5"
+    local rcsv="$RESULTS/results_${label}.csv" xcsv="$RESULTS/results_ext_${label}.csv"
+    rm -f "$h5"
+    echo; echo "=== [$label] $ds N=$n ==="
+    local t0=$SECONDS
+    BENCH_CHUNKINFO="$CIFILE" timeout --signal=KILL "${FILTER_TIMEOUT:-3600}" \
+        "$BIN" --only "$ds" --comp "$comp" --chunk-n "$n" --h5 "$h5" --out "$rcsv" --ext "$xcsv"
+    local rc=$?
+    rm -f "$h5"
+    echo "  [time] N=$n took $(( SECONDS - t0 ))s (rc=$rc)"
+    if [ $rc -eq 137 ]; then
+        [ -f "$xcsv" ] || echo "dataset,compressor,codec_kind,chunk_n,rep,logical_bytes,stored_bytes,ratio,create_ms,write_ms,flush_ms,sync_ms,close_ms,csync_ms,evict_ms,open_ms,read_ms,rmse,abs_thresh,maxae,bound_ok,write_wall_ms,d2h_ms,read_wall_ms" > "$xcsv"
+        printf '%s,%s,NA,%s,-1,0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,-1,-1,-1\n' "$ds" "$comp" "$n" >> "$xcsv"
+        echo "  [FAIL] $label KILLED BY TIMEOUT -- recorded as rep=-1"
+    fi
+    return 0
+}
+
+# [1] gate: the filter must honour a known bound before any ratio is trusted.
+TRUSTED=0
+if [ "${SKIP_GATE:-0}" != 1 ]; then
+    echo; echo "############ [1] gate (miranda, sz3_1e6, N=8) ############"
+    run_filter "gate" miranda 8 sz3_1e6
+    G="$RESULTS/results_ext_gate_sz3_1e6_N8.csv"
+    if [ -f "$G" ]; then
+        awk -F, 'FNR>1 && $5!="-1" { thr=$19+0; mx=$20+0;
+            if (thr>0 && mx<=2*thr) { print "  PASS maxae="mx" thr="thr; exit 0 }
+            else { print "  *** FAIL maxae="mx" thr="thr" ***"; exit 1 } }' "$G" && TRUSTED=1
+    fi
+    [ $TRUSTED -eq 0 ] && echo "  *** GATE FAILED (or Miranda missing) -- treat ratios below as unverified ***"
+fi
+
+# [2] ladder
+echo; echo "############ [2] $COMP -- $DATASET chunk ladder ############"
+for N in $CHUNK_COUNTS; do run_filter "$TAG" "$DATASET" "$N" "$COMP"; done
+
+echo
+echo "=== ratio vs chunk SIZE ($DATASET) ==="
+printf "%-12s %-14s %-7s %14s %9s %11s %11s\n" dataset codec N chunk_bytes ratio write_ms read_ms
+awk -F, '
+    FNR==NR { if (FNR>1) cb[$1"|"$2]=$5; next }
+    FNR>1 && $5!="-1" { k=$1"|"$4; b=(k in cb)?cb[k]:"?";
+        printf "%-12s %-14s %-7s %14s %9.3f %11.2f %11.2f\n",$1,$2,$4,b,$8,$10,$17 }' \
+    "$CIFILE" "$RESULTS"/results_ext_${TAG}_*.csv 2>/dev/null | sort -k3 -n
+
+echo; echo "=== unsupported configurations (rep=-1) ==="
+awk -F, 'FNR>1 && $5=="-1" {print "  "$1" N="$4}' "$RESULTS"/results_ext_${TAG}_*.csv 2>/dev/null
+
+echo; echo "=== fidelity (bound_ok=0) ==="
+awk -F, 'FNR>1 && $5!="-1" && $21=="0" {print "  [FAIL] "$1" N="$4" maxae="$20" thr="$19}' \
+    "$RESULTS"/results_ext_${TAG}_*.csv 2>/dev/null
+
+echo; echo "Job finished $(date)"
