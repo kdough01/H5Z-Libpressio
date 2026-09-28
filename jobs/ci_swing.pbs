@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -N h5zcomp_ci
 #PBS -l select=1:ncpus=8:ngpus=1:mpiprocs=1
-#PBS -l walltime=00:45:00
+#PBS -l walltime=01:30:00
 #PBS -j oe
 #PBS -A SDR
 #PBS -q gpu
@@ -10,7 +10,9 @@
 #   -L ci    data-free correctness (round-trips, chunk layouts, errors,
 #            blob+DXPL, plugin autoload)
 #   -L data  Miranda timing (1 chunk and 8 chunks) + a bench smoke run
-#   -L gpu   Hurricane GPU codecs (only with USE_CUDA=1)
+#            (~10-15 min per Miranda test; -V streams each field as it finishes)
+#   -L gpu   cuszp on Miranda (1 + 8 chunks), then Hurricane, one process per
+#            GPU codec (only with USE_CUDA=1)
 #
 #   qsub jobs/ci_swing.pbs                 # from the repo root
 #   qsub -v USE_CUDA=1 jobs/ci_swing.pbs   # include GPU tests
@@ -30,13 +32,13 @@ ctest -L ci --output-on-failure -j 4
 CI_RC=$?
 
 echo; echo "=== ctest -L data ==="
-ctest -L data --output-on-failure
+ctest -L data -V --output-on-failure
 DATA_RC=$?
 
 GPU_RC=0
 if [ -n "${USE_CUDA:-}" ]; then
     echo; echo "=== ctest -L gpu ==="
-    ctest -L gpu --output-on-failure
+    ctest -L gpu -V --output-on-failure
     GPU_RC=$?
 fi
 

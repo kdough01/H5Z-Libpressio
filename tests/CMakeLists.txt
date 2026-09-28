@@ -92,6 +92,18 @@ h5zc_add(data.miranda_bench_smoke
                  --out smoke.csv --ext smoke.ext.csv
          LABELS data ENV BENCH_FSYNC=0 BENCH_DROP_CACHE=0)
 if(USE_CUDA)
-  h5zc_add(data.hurricane_gpu COMMAND $<TARGET_FILE:test_time_hurricane> LABELS "data;gpu")
+  # one process per GPU codec: a CUDA fault is sticky for the whole process
+  foreach(gc cuszp cusz nvcomp)
+    h5zc_add(data.hurricane_${gc} COMMAND $<TARGET_FILE:test_time_hurricane> ${gc} LABELS "data;gpu")
+  endforeach()
+  # GPU sanity on clean data (Miranda density), cuszp only, 1 and 8 chunks
+  h5zc_add(gpu.miranda_cuszp
+           COMMAND $<TARGET_FILE:bench_comp_timing> --only miranda --comp cuszp_1e3
+                   --out gpu.csv --ext gpu.ext.csv
+           LABELS gpu ENV BENCH_FSYNC=0 BENCH_DROP_CACHE=0)
+  h5zc_add(gpu.miranda_cuszp_8chunks
+           COMMAND $<TARGET_FILE:bench_comp_timing> --only miranda --comp cuszp_1e3 --chunk-n 8
+                   --out gpu8.csv --ext gpu8.ext.csv
+           LABELS gpu ENV BENCH_FSYNC=0 BENCH_DROP_CACHE=0)
 endif()
 set_tests_properties(data.miranda_timing data.miranda_timing_8chunks PROPERTIES TIMEOUT 1800)

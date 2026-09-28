@@ -9,6 +9,13 @@
  *
  * GPU codecs your LibPressio lacks are skipped. Exit 77 when the data is not
  * reachable.
+ *
+ *   test_time_hurricane [codec]     e.g. test_time_hurricane cuszp
+ *
+ * With a codec argument only that case (plus the reference) runs. ctest runs
+ * each GPU codec in its OWN process: a CUDA fault such as "illegal memory
+ * access" is sticky and makes every later CUDA call in the process fail, so
+ * one bad codec would otherwise show up as failures of all the others.
  * ==========================================================================*/
 #include "test_common.h"
 
@@ -32,7 +39,8 @@ static const test_case_t TEST_CASES[] = {
 };
 #define N_TEST_CASES (int)(sizeof(TEST_CASES) / sizeof(TEST_CASES[0]))
 
-int main(void) {
+int main(int argc, char **argv) {
+    const char *only = argc > 1 ? argv[1] : NULL;
     struct timespec t0, t1;
     printf("GPU Hurricane test (H5Zcomp filter) starting\n");
 
@@ -46,6 +54,12 @@ int main(void) {
     float *field = (float *)h5zc_read_raw(path, sizeof(float), &nelem);
     if (!field || nelem != NELEM) { fprintf(stderr, "bad Hurricane field (%zu elems)\n", nelem); return 1; }
     printf("Loaded %s (%zu floats)\n", path, nelem);
+    {
+        size_t nonfin = 0;
+        for (size_t i = 0; i < nelem; i++) if (!isfinite(field[i])) nonfin++;
+        if (nonfin) printf("NOTE: %zu non-finite values (NaN/Inf) in this nonclean field; "
+                           "stats below skip them\n", nonfin);
+    }
 
     h5zc_init();
     hid_t file_id = H5Fcreate("hurricane_gpu_h5zcomp.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -57,6 +71,7 @@ int main(void) {
     for (int i = 0; i < N_TEST_CASES; i++) {
         const test_case_t *tc = &TEST_CASES[i];
         const char *cid = tc->compressor ? tc->compressor : DEFAULT_COMPRESSOR;
+        if (only && tc->compressor && strcmp(only, tc->compressor) != 0) continue;
         if (!h5zc_have_codec(cid)) { H5ZC_SKIPMSG("%s: '%s' not in LibPressio", tc->dset_name, cid); continue; }
 
         hid_t dcpl = h5zc_make_dcpl(tc->compressor, tc->opts_json, 3, dims);
@@ -93,7 +108,8 @@ int main(void) {
         if (tc->bound == 0.0 && st.maxae != 0.0) H5ZC_FAIL("%s lossless but maxae=%.3e", tc->dset_name, st.maxae);
         else if (tc->bound > 0.0 && st.maxae > 2.0 * tc->bound)
             H5ZC_FAIL("%s maxae=%.3e > 2x %.1e", tc->dset_name, st.maxae, tc->bound);
-        else H5ZC_PASS("%s maxae=%.3e RMSE=%.3e", tc->dset_name, st.maxae, st.rmse);
+        else H5ZC_PASS("%s maxae=%.3e RMSE=%.3e (finite points; %zu non-finite skipped)",
+                       tc->dset_name, st.maxae, st.rmse, st.nonfinite);
         fflush(stdout);
     }
     free(rbuf);

@@ -162,10 +162,10 @@ static double *read_raw_double(const char *path, size_t *out_nelem) {
     return (double *)h5zc_read_raw(path, sizeof(double), out_nelem);
 }
 
-typedef struct { double min, max, mean, rmse, maxae; } Stats;
+typedef struct { double min, max, mean, rmse, maxae; size_t nonfinite; } Stats;
 
 static Stats compute_stats(const double *orig, const double *decomp, size_t n) {
-    Stats s = { orig[0], orig[0], 0.0, 0.0, 0.0 };
+    Stats s = { orig[0], orig[0], 0.0, 0.0, 0.0, 0 };
     double sum = 0, sse = 0;
     for (size_t i = 0; i < n; i++) {
         if (orig[i] < s.min) s.min = orig[i];
@@ -180,19 +180,27 @@ static Stats compute_stats(const double *orig, const double *decomp, size_t n) {
     return s;
 }
 
+/* float version, NaN/Inf-aware: SDRBench "nonclean" fields (e.g. Hurricane
+ * CLOUDf01) contain non-finite values. Those points are skipped for the
+ * stats and counted in .nonfinite; a finite input that comes back
+ * non-finite makes maxae = INFINITY. */
 static Stats compute_stats_f(const float *orig, const float *decomp, size_t n) {
-    Stats s = { orig[0], orig[0], 0.0, 0.0, 0.0 };
+    Stats s = { INFINITY, -INFINITY, 0.0, 0.0, 0.0, 0 };
     double sum = 0, sse = 0;
+    size_t nf = 0;
     for (size_t i = 0; i < n; i++) {
         double o = orig[i], d = decomp[i];
+        if (!isfinite(o)) { s.nonfinite++; continue; }
+        if (!isfinite(d)) { s.maxae = INFINITY; continue; }
         if (o < s.min) s.min = o;
         if (o > s.max) s.max = o;
         sum += o;
         sse += (o - d) * (o - d);
         if (fabs(o - d) > s.maxae) s.maxae = fabs(o - d);
+        nf++;
     }
-    s.mean = sum / (double)n;
-    s.rmse = sqrt(sse / (double)n);
+    s.mean = nf ? sum / (double)nf : 0.0;
+    s.rmse = nf ? sqrt(sse / (double)nf) : 0.0;
     return s;
 }
 

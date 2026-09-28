@@ -508,7 +508,16 @@ static void *comp_compress(comp_ctx *x, const void *data, size_t nbytes, size_t 
     }
 
     input  = pressio_data_new_nonowning_domain(in_dtype, (void *)data, in_ndims, in_dims, "malloc");
-    output = pressio_data_new_empty(pressio_byte_dtype, 0, NULL);
+    {
+        /* Give the codec a capacity-sized host output, exactly like the VOL's
+         * host arm (vol_reserve_comp_output). A 0-byte empty output is fine for
+         * CPU codecs that allocate their own, but GPU codecs (cusz) size their
+         * device->host copy from it: with 0 bytes, cusz 0.14 faulted with
+         * "illegal memory access (700)", which poisons the CUDA context for
+         * every later call in the process. */
+        size_t cap_dims[1] = { nbytes + nbytes / 8 + (1u << 16) };
+        output = pressio_data_new_owning(pressio_byte_dtype, 1, cap_dims);
+    }
     if (!input || !output) goto done;
 
     if (pressio_compressor_compress(x->compressor, input, output) != 0) {
