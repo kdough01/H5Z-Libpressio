@@ -1,7 +1,7 @@
 /* ============================================================================
  * test_time_hurricane.c  --  port of the VOL repo's GPU Hurricane test
  *
- * Hurricane-ISABEL CLOUDf01 (100x500x500 float32) through the GPU codecs the
+ * Hurricane-ISABEL CLOUD (100x500x500 float32) through the GPU codecs the
  * VOL test used (nvcomp, cusz, cuszp) plus the uncompressed reference, timed
  * per write/read. In the filter every one of these pays the per-chunk
  * host->device and device->host copies (see examples/NOTES.md section 2), so
@@ -11,6 +11,12 @@
  * reachable.
  *
  *   test_time_hurricane [codec]     e.g. test_time_hurricane cuszp
+ *
+ * Field: the CLEAN snapshot-48 CLOUDf48.bin by default. Set
+ * H5ZCOMP_HURRICANE_FILE to use another one -- ctest's data.hurricane_nonclean_*
+ * points it at the VOL test's nonclean CLOUDf01.bin (19,573 NaN/Inf values),
+ * where cuszp returns errors up to ~3.4e38 and cusz faults: expected to FAIL,
+ * kept as a documented finding about codecs on non-finite input.
  *
  * With a codec argument only that case (plus the reference) runs. ctest runs
  * each GPU codec in its OWN process: a CUDA fault such as "illegal memory
@@ -45,7 +51,8 @@ int main(int argc, char **argv) {
     printf("GPU Hurricane test (H5Zcomp filter) starting\n");
 
     char path[512];
-    snprintf(path, sizeof(path), "%s/CLOUDf01.bin", HURRICANE_PATH);
+    const char *override = getenv("H5ZCOMP_HURRICANE_FILE");
+    snprintf(path, sizeof(path), "%s", (override && *override) ? override : HURRICANE_CLEAN);
     if (access(path, R_OK) != 0) {
         printf("%s not reachable -- skipping\n", path);
         return H5ZC_SKIP;

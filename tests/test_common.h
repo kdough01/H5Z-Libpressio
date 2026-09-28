@@ -38,7 +38,10 @@
 #define H5ZC_SKIP 77
 
 #define MIRANDA_PATH   BENCH_DATA_ROOT "/Miranda/SDRBENCH-Miranda-256x384x384"
-#define HURRICANE_PATH BENCH_DATA_ROOT "/Hurricane-ISABEL/nonclean-data"
+/* Clean snapshot-48 fields (100x500x500 f32). The VOL test used the NONCLEAN
+ * CLOUDf01, which holds ~19.5k NaN/Inf values -- see test_time_hurricane.c. */
+#define HURRICANE_CLEAN    BENCH_DATA_ROOT "/Hurricane-ISABEL/clean-data-snapshot48/CLOUDf48.bin"
+#define HURRICANE_NONCLEAN BENCH_DATA_ROOT "/Hurricane-ISABEL/nonclean-data/CLOUDf01.bin"
 
 #define MIR_NX    256
 #define MIR_NY    384

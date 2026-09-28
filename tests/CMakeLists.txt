@@ -96,6 +96,12 @@ if(USE_CUDA)
   foreach(gc cuszp cusz nvcomp)
     h5zc_add(data.hurricane_${gc} COMMAND $<TARGET_FILE:test_time_hurricane> ${gc} LABELS "data;gpu")
   endforeach()
+  # Nonclean CLOUDf01 (what the VOL test used): NaN/Inf input breaks the
+  # error bound. Expected to fail -- a documented finding, not a regression.
+  h5zc_add(data.hurricane_nonclean_cuszp COMMAND $<TARGET_FILE:test_time_hurricane> cuszp
+           LABELS "data;gpu"
+           ENV H5ZCOMP_HURRICANE_FILE=${BENCH_DATA_ROOT}/Hurricane-ISABEL/nonclean-data/CLOUDf01.bin)
+  set_tests_properties(data.hurricane_nonclean_cuszp PROPERTIES WILL_FAIL TRUE)
   # GPU sanity on clean data (Miranda density), cuszp only, 1 and 8 chunks
   h5zc_add(gpu.miranda_cuszp
            COMMAND $<TARGET_FILE:bench_comp_timing> --only miranda --comp cuszp_1e3
