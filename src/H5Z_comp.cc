@@ -487,9 +487,43 @@ static comp_ctx *comp_ctx_get(const unsigned *cd, size_t n, hid_t dxpl_id) {
 /* ---------------------------------------------------------------------------
  * native-path compress / decompress
  * ------------------------------------------------------------------------ */
+/* ---------------------------------------------------------------------------
+ * zfp CUDA size workaround.
+ *
+ * With zfp:execution=cuda and fixed rate, zfp_compress() (as called by
+ * LibPressio's zfp plugin) reports 1/8 of the real stream size -- verified on
+ * Swing with the pressio CLI alone: rate 8 on Miranda reports 4,718,592 B /
+ * bit_rate 1, while the stream is 37,748,736 B. The buffer does hold the whole
+ * stream, so in-memory round trips look fine, but a filter stores only the
+ * reported bytes and the dataset becomes undecodable.
+ *
+ * For fixed rate the true size is known exactly: ceil(nblocks*maxbits/64)*8
+ * with nblocks = prod(ceil(dim/4)). If the codec is zfp on CUDA in fixed-rate
+ * mode, the reported size is short, and the buffer's capacity covers the true
+ * size, we use the true size. Disable with H5ZCOMP_NO_ZFP_CUDA_FIX=1.
+ * ------------------------------------------------------------------------ */
+static size_t comp_zfp_cuda_true_size(comp_ctx *x, size_t in_ndims, const size_t *in_dims) {
+    if (x->id != "zfp") return 0;
+    const char *e = getenv("H5ZCOMP_NO_ZFP_CUDA_FIX");
+    if (e && *e && *e != '0') return 0;
+    struct pressio_options *o = pressio_compressor_get_options(x->compressor);
+    if (!o) return 0;
+    int32_t exec = -1; uint32_t minbits = 0, maxbits = 0;
+    pressio_options_get_integer(o, "zfp:execution", &exec);
+    pressio_options_get_uinteger(o, "zfp:minbits", &minbits);
+    pressio_options_get_uinteger(o, "zfp:maxbits", &maxbits);
+    pressio_options_free(o);
+    if (exec != 2 /* zfp_exec_cuda */ || maxbits == 0 || minbits != maxbits) return 0;
+    unsigned long long nblocks = 1;
+    for (size_t i = 0; i < in_ndims; i++) nblocks *= (unsigned long long)((in_dims[i] + 3) / 4);
+    unsigned long long bits = nblocks * (unsigned long long)maxbits;
+    return (size_t)(((bits + 63) / 64) * 8);
+}
+
 static void *comp_compress(comp_ctx *x, const void *data, size_t nbytes, size_t *out_csize) {
     struct pressio_data *input = NULL, *output = NULL;
     void *ret = NULL;
+    size_t force_bytes = 0;   /* zfp CUDA workaround, see below */
     size_t rdims[H5S_MAX_RANK], byte_dims[1];
     enum pressio_dtype in_dtype; size_t in_ndims; size_t *in_dims;
 
@@ -524,10 +558,47 @@ static void *comp_compress(comp_ctx *x, const void *data, size_t nbytes, size_t 
                 x->id.c_str(), pressio_compressor_error_msg(x->compressor));
         goto done;
     }
+    {
+        size_t want = comp_zfp_cuda_true_size(x, in_ndims, in_dims);
+        size_t have = output->size_in_bytes();
+        if (want > have) {
+            /* Where the full stream lives depends on the plugin's path:
+             *  - it reused a pre-sized output: capacity_in_bytes() covers it;
+             *  - it malloc'd its own bitstream (our empty-output case): the
+             *    buffer is zfp_stream_maximum_size() >= want bytes, but
+             *    pressio_data::move() records capacity == the short size.
+             * Reading `want` bytes is safe in both; reshape() only works in the
+             * first, so the second is handled by force_bytes at the copy. */
+            static bool warned = false;
+            if (!warned) {
+                fprintf(stderr, "[H5Z_comp] zfp CUDA reported %zu B for a fixed-rate stream of "
+                        "%zu B; storing the full stream (zfp CUDA size bug workaround, "
+                        "H5ZCOMP_NO_ZFP_CUDA_FIX=1 disables)\n", have, want);
+                warned = true;
+            }
+            if (output->capacity_in_bytes() >= want) output->reshape({want});
+            else if (comp_domain_is_host_accessible(pressio_data_domain_id(output))) force_bytes = want;
+            else {
+                fprintf(stderr, "[H5Z_comp] zfp CUDA stream is short (%zu of %zu B) and not "
+                        "host-resident -- refusing to store a truncated stream\n", have, want);
+                goto done;
+            }
+        }
+    }
     comp_make_host_resident(output);
     {
         size_t sz = 0; void *src = pressio_data_ptr(output, &sz);
+        if (force_bytes > sz) sz = force_bytes;
         if (!src || sz == 0) goto done;
+        /* HDF5 records a filtered chunk's stored size in 32 bits. A larger
+         * result is written without complaint and silently truncated on read
+         * (seen: einspline37 noop, one 12.6 GiB chunk -> maxae 21 on read-back),
+         * so refuse it here and let the write fail loudly. */
+        if (sz >= ((size_t)1 << 32)) {
+            fprintf(stderr, "[H5Z_comp] '%s' produced %zu B for one chunk; HDF5 cannot store a "
+                    "filtered chunk >= 4 GiB -- use smaller chunks\n", x->id.c_str(), sz);
+            goto done;
+        }
         ret = H5allocate_memory(sz, 0);
         if (!ret) goto done;
         memcpy(ret, src, sz);
@@ -545,8 +616,11 @@ static void *comp_decompress(comp_ctx *x, const void *cbuf, size_t csize, size_t
     if (!ret) return NULL;
 
     if (x->id == "noop") {
-        size_t nn = csize < out_bytes ? csize : out_bytes;
-        memcpy(ret, cbuf, nn); *out_nbytes = out_bytes; return ret;
+        if (csize != out_bytes) {   /* e.g. a >= 4 GiB chunk truncated by HDF5 */
+            fprintf(stderr, "[H5Z_comp] noop chunk is %zu B on disk but should be %zu B\n", csize, out_bytes);
+            H5free_memory(ret); return NULL;
+        }
+        memcpy(ret, cbuf, out_bytes); *out_nbytes = out_bytes; return ret;
     }
 
     struct pressio_data *input = NULL, *output = NULL;

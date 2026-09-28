@@ -5,16 +5,20 @@ compare_vol_filter.py -- line up VOL and H5Zcomp benchmark rows.
     python3 scripts/compare_vol_filter.py VOL_EXT.csv [VOL_EXT2.csv ...] -- FILTER_EXT.csv [...]
     python3 scripts/compare_vol_filter.py vol.csv -- filt.csv --out compare.csv
 
-Both inputs are the 24-column "ext" CSVs written by bench_vol_timing (VOL
-repo) and bench_comp_timing (this repo). Rows are joined on
-(dataset, compressor) -- the compressor name already encodes the chunking
-(e.g. sz3_1e3_vjson) -- and the chunk_n column shows "vol/filter". Pass
---by-chunk to join on chunk_n too (chunk-ladder runs). Reps are averaged;
-rep=-1 failure rows are reported separately. Standard library only.
+Both inputs are the "ext" CSVs written by bench_vol_timing (VOL repo) and
+bench_comp_timing (this repo). Rows are joined on (dataset, compressor,
+chunk_n). Reps are averaged; rep=-1 failure rows are reported separately.
+Standard library only.
 
-Note: VOL results produced before the bench_config.h vol:chunk_n parsing fix
-report chunk_n=1 for every *_vjson entry; that is why chunk_n is not part of
-the default key.
+VOL-side handling:
+  - VOL sweeps also run each compressor with VOL_COMP_CHUNK_N=8/16 under the
+    SAME compressor name; joining without chunk_n averaged those into the N=1
+    row (skewed ratios/times). chunk_n is therefore part of the key.
+  - VOL results from before the bench_config.h vol:chunk_n parsing fix report
+    chunk_n=1 for *_vjson rows; those are corrected to 8.
+  - Files matching *_pressio_N* or *_pjson* (LibPressio-internal chunking, no
+    filter analogue) are skipped unless --keep-pressio.
+  - --alias qmc=einspline37 renames a VOL dataset (repeatable).
 """
 import csv
 import sys
@@ -23,14 +27,24 @@ from collections import defaultdict
 NUM = ["ratio", "write_ms", "read_ms", "rmse", "maxae", "stored_bytes"]
 
 
-BY_CHUNK = False
+BY_CHUNK = True
+KEEP_PRESSIO = False
+ALIAS = {}
 
 
-def load(paths):
+def load(paths, vol_side=False):
+    import os
     rows, fails = defaultdict(list), []
     for p in paths:
+        b = os.path.basename(p)
+        if vol_side and not KEEP_PRESSIO and ("_pressio_N" in b or "_pjson" in b):
+            continue
         with open(p, newline="") as f:
             for r in csv.DictReader(f):
+                if vol_side:
+                    r["dataset"] = ALIAS.get(r["dataset"], r["dataset"])
+                    if r["compressor"].endswith("_vjson") and r["chunk_n"] == "1":
+                        r["chunk_n"] = "8"
                 key = (r["dataset"], r["compressor"]) + ((r["chunk_n"],) if BY_CHUNK else ())
                 if r["rep"] == "-1":
                     fails.append(key)
@@ -46,10 +60,19 @@ def load(paths):
 
 
 def main(argv):
-    global BY_CHUNK
-    if "--by-chunk" in argv:
-        BY_CHUNK = True
-        argv = [a for a in argv if a != "--by-chunk"]
+    global BY_CHUNK, KEEP_PRESSIO
+    if "--no-chunk" in argv:
+        BY_CHUNK = False
+        argv = [a for a in argv if a != "--no-chunk"]
+    argv = [a for a in argv if a != "--by-chunk"]   # default now; accepted for compatibility
+    if "--keep-pressio" in argv:
+        KEEP_PRESSIO = True
+        argv = [a for a in argv if a != "--keep-pressio"]
+    while "--alias" in argv:
+        i = argv.index("--alias")
+        a, b = argv[i + 1].split("=", 1)
+        ALIAS[a] = b
+        argv = argv[:i] + argv[i + 2:]
     out = None
     if "--out" in argv:
         i = argv.index("--out")
@@ -58,7 +81,7 @@ def main(argv):
     if "--" not in argv:
         sys.exit(__doc__)
     i = argv.index("--")
-    vol, vfail = load(argv[:i])
+    vol, vfail = load(argv[:i], vol_side=True)
     fil, ffail = load(argv[i + 1:])
 
     keys = sorted(set(vol) | set(fil))
