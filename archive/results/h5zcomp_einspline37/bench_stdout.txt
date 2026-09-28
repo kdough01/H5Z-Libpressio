@@ -1,0 +1,31 @@
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+  einspline37    noop             N=1     r=0 C=  2.40 W= 57568.91 F=   16.40 S=   97.13 X=   0.36 S2=  62.38 | E=  0.21 O=  0.38 R=  5039.69 ms  ratio=   1.00x  file=12932.6 MiB  RMSE=6.996e-01 maxae=2.126e+01
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+  einspline37    sz3_1e3          N=1     r=0 C=  0.72 W=186119.28 F=    0.11 S=  378.35 X=   0.27 S2= 125.58 | E=  0.22 O=  0.41 R=131941.72 ms  ratio=   3.38x  file=3827.7 MiB  RMSE=5.742e-04 maxae=1.000e-03
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+  einspline37    zfp_cpu_r4       N=1     r=0 C=  0.73 W= 73170.96 F=    0.14 S=  341.14 X=   0.23 S2=  95.65 | E=  0.23 O=  0.35 R= 49879.95 ms  ratio=   8.00x  file=1616.6 MiB  RMSE=7.313e-01 maxae=4.800e+01
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+  einspline37    zfp_cpu_r8       N=1     r=0 C=  0.69 W=100132.57 F=    0.15 S=   25.21 X=   0.36 S2=  84.31 | E=  0.25 O=  0.36 R= 87595.53 ms  ratio=   4.00x  file=3233.2 MiB  RMSE=4.067e-02 maxae=3.363e+00
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+  einspline37    zfp_cpu_r12      N=1     r=0 C=  0.70 W=126676.29 F=    0.14 S=   64.20 X=   0.24 S2=  43.95 | E=  0.23 O=  0.42 R= 30311.75 ms  ratio=   2.67x  file=4849.7 MiB  RMSE=6.488e-01 maxae=2.126e+01
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+  einspline37    zfp_cpu_r16      N=1     r=0 C=  0.56 W=137121.45 F=    0.15 S=   90.13 X=   0.22 S2=  49.86 | E=  0.23 O=  0.41 R= 64313.95 ms  ratio=   2.00x  file=6466.3 MiB  RMSE=5.978e-01 maxae=2.126e+01
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+  einspline37    zfp_1e3          N=1     r=0 C=  0.68 W=111631.80 F=    0.11 S=  187.44 X=   0.34 S2=  91.10 | E=  0.26 O=  0.36 R= 39940.22 ms  ratio=   2.45x  file=5270.6 MiB  RMSE=6.346e-01 maxae=2.126e+01
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+  einspline37    zfp_1e6          N=1     r=0 C=189.44 W=149627.15 F=    0.14 S=   13.13 X=   0.21 S2=  30.82 | E=  0.23 O=  0.35 R= 37208.06 ms  ratio=   1.39x  file=9312.5 MiB  RMSE=6.560e-01 maxae=2.126e+01
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+  einspline37    szx_1e3          N=1     r=0 C=311.14 W= 62367.49 F=    0.14 S=  240.53 X=   0.20 S2= 122.23 | E=  0.21 O=  0.36 R= 34485.59 ms  ratio=   1.60x  file=8077.2 MiB  RMSE=5.352e-01 maxae=2.126e+01
+CHUNKINFO dataset=einspline37 chunk_n=1 nchunks_actual=1 chunk_elems=3390212880 chunk_bytes=13560851520
+  einspline37    szx_1e6          N=1     r=0 C=301.05 W= 68819.24 F=    0.14 S=  137.25 X=   0.23 S2=  99.58 | E=  0.28 O=  0.37 R= 31410.28 ms  ratio=   1.10x  file=11722.2 MiB  RMSE=6.126e-01 maxae=2.126e+01
+CHUNKINFO dataset=einspline37 chunk_n=8 nchunks_actual=8 chunk_elems=423776610 chunk_bytes=1695106440
+  einspline37    noop_vjson       N=8     r=0 C=421.04 W= 34638.53 F=    3.64 S=   64.45 X=   0.30 S2=  52.27 | E=  0.21 O=  0.35 R= 17965.49 ms  ratio=   1.00x  file=12932.6 MiB  RMSE=0.000e+00 maxae=0.000e+00
+CHUNKINFO dataset=einspline37 chunk_n=8 nchunks_actual=8 chunk_elems=423776610 chunk_bytes=1695106440
