@@ -1,0 +1,618 @@
+Job started Mon Sep 28 11:09:35 CDT 2026 on gpu2
+LP_VIEW        = /home/kdougherty/libpressio_cuda/.spack-env/view
+LP_LIB         = /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+LP_CMAKE_DIR   = /home/kdougherty/libpressio_cuda/.spack-env/view/lib/cmake/LibPressio
+HDF5_BLOB      = /home/kdougherty/sw/hdf5-blob-e77c5db  (e77c5db26df33e19a04dbd19f65af1701907d5b9 Merge branch '6153' into blob)
+HDF5_BLOB_LIB  = /home/kdougherty/sw/hdf5-blob-e77c5db/lib
+BENCH_DATA_ROOT= /lcrc/project/ECP-EZ/public/compression
+H5Z_SCRATCH    = /lcrc/project/SDR/kdougherty/h5zcomp_bench
+cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by cmake)
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/gcc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/g++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found HDF5: hdf5-shared (found version "2.3.0") found components: C 
+-- Found OpenMP_C: -fopenmp (found version "4.5") 
+-- Found OpenMP_CXX: -fopenmp (found version "4.5") 
+-- Found OpenMP: TRUE (found version "4.5")  
+-- Found BZip2: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libbz2.so (found version "1.0.8") 
+-- Looking for BZ2_bzCompressInit
+-- Looking for BZ2_bzCompressInit - found
+-- Found OpenMP_C: -fopenmp (found version "4.5") 
+-- Found OpenMP_CXX: -fopenmp (found version "4.5") 
+-- Found ZLIB: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libz.so (found version "1.3.1") 
+-- Found PkgConfig: /home/kdougherty/libpressio_cuda/.spack-env/view/bin/pkg-config (found version "2.5.1") 
+-- Checking for one of the modules 'libzstd'
+-- Found CUDAToolkit: /home/kdougherty/libpressio_cuda/.spack-env/view/include (found version "12.9.86") 
+-- Found Threads: TRUE  
+-- Found nvcomp: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/cmake/nvcomp/nvcomp-config.cmake  
+-- Checking for one of the modules 'protobuf>=3.0.0'
+-- Found OpenMP_C: -fopenmp (found version "4.5") 
+-- Found OpenMP_CXX: -fopenmp (found version "4.5") 
+-- Found mgard: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/cmake/mgard/mgard-config.cmake (found version "1.5.2") 
+-- Found ZFP: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/cmake/zfp/zfp-config.cmake (found version "0.5.5") 
+-- Found OpenMP_C: -fopenmp (found version "4.5") 
+-- Found OpenMP_CXX: -fopenmp (found version "4.5") 
+-- Found GSL: /home/kdougherty/libpressio_cuda/.spack-env/view/include (found version "2.8") 
+-- Checking for one of the modules 'blosc'
+-- Found MPI_C: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libmpi.so (found version "3.1") 
+-- Found MPI_CXX: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libmpi.so (found version "3.1") 
+-- Found MPI: TRUE (found version "3.1")  
+-- Found fpzip: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/cmake/fpzip/fpzip-config.cmake (found version "1.3.0") 
+-- Found MPI: TRUE (found version "3.1") found components: CXX 
+-- Checking for one of the modules 'lua;luajit'
+-- Found nlohmann_json: /home/kdougherty/libpressio_cuda/.spack-env/view/share/cmake/nlohmann_json/nlohmann_jsonConfig.cmake (found version "3.12.0") 
+-- Found Python3: /home/kdougherty/libpressio_cuda/.spack-env/view/bin/python3 (found version "3.14.5") found components: Interpreter Development NumPy Development.Module Development.Embed 
+-- Found SWIG: /home/kdougherty/libpressio_cuda/.spack-env/view/bin/swig4.0 (found version "4.1.1")  
+-- HDF5 version: 2.3.0  (target hdf5::hdf5)
+-- HDF5 filter API: class3 without per-dataset state (blob@e77c5db layout)
+-- Configuring done
+CMake Warning at CMakeLists.txt:99 (add_library):
+  Cannot generate a safe runtime search path for target H5Zcomp because files
+  in some directories may conflict with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+
+
+CMake Warning at CMakeLists.txt:99 (add_library):
+  Cannot generate a safe dependent library path for target H5Zcomp because
+  files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+
+
+CMake Warning at examples/CMakeLists.txt:2 (add_executable):
+  Cannot generate a safe runtime search path for target ex_roundtrip because
+  files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+
+
+CMake Warning at examples/CMakeLists.txt:2 (add_executable):
+  Cannot generate a safe dependent library path for target ex_roundtrip
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+
+
+CMake Warning at examples/CMakeLists.txt:2 (add_executable):
+  Cannot generate a safe runtime search path for target ex_config_size
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+
+
+CMake Warning at examples/CMakeLists.txt:2 (add_executable):
+  Cannot generate a safe dependent library path for target ex_config_size
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+
+
+CMake Warning at examples/CMakeLists.txt:2 (add_executable):
+  Cannot generate a safe runtime search path for target ex_large_config
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+
+
+CMake Warning at examples/CMakeLists.txt:2 (add_executable):
+  Cannot generate a safe dependent library path for target ex_large_config
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+
+
+CMake Warning at tests/CMakeLists.txt:23 (add_executable):
+  Cannot generate a safe runtime search path for target test_ci because files
+  in some directories may conflict with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  tests/CMakeLists.txt:29 (h5zc_test)
+
+
+CMake Warning at tests/CMakeLists.txt:23 (add_executable):
+  Cannot generate a safe dependent library path for target test_ci because
+  files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  tests/CMakeLists.txt:29 (h5zc_test)
+
+
+CMake Warning at tests/CMakeLists.txt:23 (add_executable):
+  Cannot generate a safe runtime search path for target test_cpu_write
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  tests/CMakeLists.txt:30 (h5zc_test)
+
+
+CMake Warning at tests/CMakeLists.txt:23 (add_executable):
+  Cannot generate a safe dependent library path for target test_cpu_write
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  tests/CMakeLists.txt:30 (h5zc_test)
+
+
+CMake Warning at tests/CMakeLists.txt:23 (add_executable):
+  Cannot generate a safe runtime search path for target test_error_miranda
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  tests/CMakeLists.txt:31 (h5zc_test)
+
+
+CMake Warning at tests/CMakeLists.txt:23 (add_executable):
+  Cannot generate a safe dependent library path for target test_error_miranda
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  tests/CMakeLists.txt:31 (h5zc_test)
+
+
+CMake Warning at tests/CMakeLists.txt:23 (add_executable):
+  Cannot generate a safe runtime search path for target test_large_config
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  tests/CMakeLists.txt:32 (h5zc_test)
+
+
+CMake Warning at tests/CMakeLists.txt:23 (add_executable):
+  Cannot generate a safe dependent library path for target test_large_config
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  tests/CMakeLists.txt:32 (h5zc_test)
+
+
+CMake Warning at tests/CMakeLists.txt:23 (add_executable):
+  Cannot generate a safe runtime search path for target test_time_miranda
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  tests/CMakeLists.txt:33 (h5zc_test)
+
+
+CMake Warning at tests/CMakeLists.txt:23 (add_executable):
+  Cannot generate a safe dependent library path for target test_time_miranda
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  tests/CMakeLists.txt:33 (h5zc_test)
+
+
+CMake Warning at tests/CMakeLists.txt:23 (add_executable):
+  Cannot generate a safe runtime search path for target test_time_hurricane
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  tests/CMakeLists.txt:34 (h5zc_test)
+
+
+CMake Warning at tests/CMakeLists.txt:23 (add_executable):
+  Cannot generate a safe dependent library path for target
+  test_time_hurricane because files in some directories may conflict with
+  libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  tests/CMakeLists.txt:34 (h5zc_test)
+
+
+CMake Warning at tests/CMakeLists.txt:23 (add_executable):
+  Cannot generate a safe runtime search path for target plugin_fixture_write
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  tests/CMakeLists.txt:35 (h5zc_test)
+
+
+CMake Warning at tests/CMakeLists.txt:23 (add_executable):
+  Cannot generate a safe dependent library path for target
+  plugin_fixture_write because files in some directories may conflict with
+  libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  tests/CMakeLists.txt:35 (h5zc_test)
+
+
+CMake Warning at tests/CMakeLists.txt:43 (add_executable):
+  Cannot generate a safe runtime search path for target bench_comp_timing
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+
+
+CMake Warning at tests/CMakeLists.txt:43 (add_executable):
+  Cannot generate a safe dependent library path for target bench_comp_timing
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/kdougherty/libpressio_cuda/.spack-env/view/lib
+
+  Some of these libraries may not be found correctly.
+
+
+-- Generating done
+-- Build files have been written to: /home/kdougherty/hdf5_projs/H5Z-Libpressio/build_h5zcomp_ocean_temp
+cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[  7%] Building C object tests/CMakeFiles/test_plugin_read.dir/test_plugin_read.c.o
+[  7%] Building CXX object CMakeFiles/H5Zcomp.dir/src/H5Z_comp.cc.o
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 11%] Linking C executable ../bin/test_plugin_read
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 11%] Built target test_plugin_read
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 15%] Linking CXX shared library lib/libH5Zcomp.so
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 15%] Built target H5Zcomp
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 19%] Building C object examples/CMakeFiles/ex_config_size.dir/ex_config_size.c.o
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 26%] Building C object examples/CMakeFiles/ex_roundtrip.dir/ex_roundtrip.c.o
+[ 26%] Building C object tests/CMakeFiles/test_ci.dir/test_ci.c.o
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 30%] Building C object tests/CMakeFiles/test_error_miranda.dir/test_error_miranda.c.o
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 34%] Building C object examples/CMakeFiles/ex_large_config.dir/ex_large_config.c.o
+[ 42%] Building C object tests/CMakeFiles/test_large_config.dir/test_large_config.c.o
+[ 42%] Building C object tests/CMakeFiles/test_time_miranda.dir/test_time_miranda.c.o
+[ 46%] Building C object tests/CMakeFiles/test_cpu_write.dir/test_cpu_write.c.o
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 50%] Linking C executable ../bin/ex_config_size
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 57%] Linking C executable ../bin/ex_roundtrip
+[ 57%] Linking C executable ../bin/ex_large_config
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 61%] Linking C executable ../bin/test_cpu_write
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 65%] Linking C executable ../bin/test_ci
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 69%] Linking C executable ../bin/test_error_miranda
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 73%] Linking C executable ../bin/test_time_miranda
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 76%] Linking C executable ../bin/test_large_config
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/bin/ld: warning: libhdf5.so.310, needed by /bin/ld/home/kdougherty/libpressio_cuda/.spack-env/view/lib/liblibpressio.so: warning: , may conflict with libhdf5.so.310libhdf5.so.1000, needed by 
+/home/kdougherty/libpressio_cuda/.spack-env/view/lib/liblibpressio.so, may conflict with libhdf5.so.1000
+/bin/ld: warning: libhdf5.so.310, needed by /home/kdougherty/libpressio_cuda/.spack-env/view/lib/liblibpressio.so, may conflict with libhdf5.so.1000
+/bin/ld: warning: libhdf5.so.310, needed by /bin/ld/home/kdougherty/libpressio_cuda/.spack-env/view/lib/liblibpressio.so: warning: , may conflict with libhdf5.so.310libhdf5.so.1000, needed by 
+/home/kdougherty/libpressio_cuda/.spack-env/view/lib/liblibpressio.so, may conflict with libhdf5.so.1000
+/bin/ld: warning: libhdf5.so.310, needed by /home/kdougherty/libpressio_cuda/.spack-env/view/lib/liblibpressio.so, may conflict with libhdf5.so.1000
+/bin/ld: warning: libhdf5.so.310, needed by /home/kdougherty/libpressio_cuda/.spack-env/view/lib/liblibpressio.so, may conflict with libhdf5.so.1000
+/bin/ld: warning: libhdf5.so.310, needed by /home/kdougherty/libpressio_cuda/.spack-env/view/lib/liblibpressio.so, may conflict with libhdf5.so.1000
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 76%] Built target ex_roundtrip
+[ 76%] Built target test_ci
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 76%] Built target test_time_miranda
+[ 76%] Built target test_large_config
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 76%] Built target ex_config_size
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 76%] Built target ex_large_config
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 84%] Building C object tests/CMakeFiles/plugin_fixture_write.dir/plugin_fixture_write.c.o
+[ 84%] Building C object tests/CMakeFiles/test_time_hurricane.dir/test_time_hurricane.c.o
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 88%] Building CXX object tests/CMakeFiles/bench_comp_timing.dir/bench_comp_timing.cc.o
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 88%] Built target test_cpu_write
+[ 88%] Built target test_error_miranda
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 92%] Linking C executable ../bin/plugin_fixture_write
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 96%] Linking C executable ../bin/test_time_hurricane
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/bin/ld: warning: libhdf5.so.310, needed by /home/kdougherty/libpressio_cuda/.spack-env/view/lib/liblibpressio.so, may conflict with libhdf5.so.1000
+/bin/ld: warning: libhdf5.so.310, needed by /home/kdougherty/libpressio_cuda/.spack-env/view/lib/liblibpressio.so, may conflict with libhdf5.so.1000
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 96%] Built target test_time_hurricane
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[ 96%] Built target plugin_fixture_write
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[100%] Linking CXX executable ../bin/bench_comp_timing
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+/bin/ld: warning: libhdf5.so.310, needed by /home/kdougherty/libpressio_cuda/.spack-env/view/lib/liblibpressio.so, may conflict with libhdf5.so.1000
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+[100%] Built target bench_comp_timing
+/usr/bin/cmake: /home/kdougherty/libpressio_cuda/.spack-env/view/lib/libcurl.so.4: no version information available (required by /usr/bin/cmake)
+
+=== matrix / availability ===
+compressor         id      kind  chunkN available opts
+noop               noop    cpu   1      yes       {}
+cuszp_1e3          cuszp   gpu   1      yes       {"pressio:abs":1e-3,"cuszp:mode_str":"outlier"}
+cuszp_1e6          cuszp   gpu   1      yes       {"pressio:abs":1e-6,"cuszp:mode_str":"outlier"}
+sz3_1e3            sz3     cpu   1      yes       {"sz3:error_bound_mode_str":"abs","sz3:abs_error_bound":1e-3}
+sz3_1e6            sz3     cpu   1      yes       {"sz3:error_bound_mode_str":"abs","sz3:abs_error_bound":1e-6}
+bzip2              bzip2   cpu   1      yes       {"bzip2:block_size":9}
+zfp_cpu_r4         zfp     cpu   1      yes       {"zfp:rate":4.0,"zfp:wra":0,"zfp:execution":0,"zfp:execution_name":"serial"}
+zfp_gpu_r4         zfp     gpu   1      yes       {"zfp:rate":4.0,"zfp:wra":0,"zfp:execution":2,"zfp:execution_name":"cuda"}
+zfp_cpu_r8         zfp     cpu   1      yes       {"zfp:rate":8.0,"zfp:wra":0,"zfp:execution":0,"zfp:execution_name":"serial"}
+zfp_gpu_r8         zfp     gpu   1      yes       {"zfp:rate":8.0,"zfp:wra":0,"zfp:execution":2,"zfp:execution_name":"cuda"}
+zfp_cpu_r12        zfp     cpu   1      yes       {"zfp:rate":12.0,"zfp:wra":0,"zfp:execution":0,"zfp:execution_name":"serial"}
+zfp_gpu_r12        zfp     gpu   1      yes       {"zfp:rate":12.0,"zfp:wra":0,"zfp:execution":2,"zfp:execution_name":"cuda"}
+zfp_cpu_r16        zfp     cpu   1      yes       {"zfp:rate":16.0,"zfp:wra":0,"zfp:execution":0,"zfp:execution_name":"serial"}
+zfp_gpu_r16        zfp     gpu   1      yes       {"zfp:rate":16.0,"zfp:wra":0,"zfp:execution":2,"zfp:execution_name":"cuda"}
+zfp_1e3            zfp     cpu   1      yes       {"zfp:accuracy":1e-3,"zfp:execution":0,"zfp:execution_name":"serial"}
+zfp_1e6            zfp     cpu   1      yes       {"zfp:accuracy":1e-6,"zfp:execution":0,"zfp:execution_name":"serial"}
+szx_1e3            szx     cpu   1      yes       {"pressio:abs":1e-3}
+szx_1e6            szx     cpu   1      yes       {"pressio:abs":1e-6}
+noop_vjson         noop    cpu   8      yes       {"vol:chunking_mode":"vol","vol:chunk_n":8}
+bzip2_vjson        bzip2   cpu   8      yes       {"bzip2:block_size":9,"vol:chunking_mode":"vol","vol:chunk_n":8}
+bzip2_pjson        bzip2   cpu   8      yes       {"bzip2:block_size":9,"vol:chunking_mode":"pressio","vol:chunk_n":8}   [pjson: skipped by default]
+sz3_1e3_vjson      sz3     cpu   8      yes       {"sz3:error_bound_mode_str":"abs","sz3:abs_error_bound":1e-3,"vol:chunking_mode":"vol","vol:chunk_n":8}
+sz3_1e3_pjson      sz3     cpu   8      yes       {"sz3:error_bound_mode_str":"abs","sz3:abs_error_bound":1e-3,"vol:chunking_mode":"pressio","vol:chunk_n":8}   [pjson: skipped by default]
+sz3_1e6_vjson      sz3     cpu   8      yes       {"sz3:error_bound_mode_str":"abs","sz3:abs_error_bound":1e-6,"vol:chunking_mode":"vol","vol:chunk_n":8}
+sz3_1e6_pjson      sz3     cpu   8      yes       {"sz3:error_bound_mode_str":"abs","sz3:abs_error_bound":1e-6,"vol:chunking_mode":"pressio","vol:chunk_n":8}   [pjson: skipped by default]
+szx_1e3_vjson      szx     cpu   8      yes       {"pressio:abs":1e-3,"vol:chunking_mode":"vol","vol:chunk_n":8}
+szx_1e3_pjson      szx     cpu   8      yes       {"pressio:abs":1e-3,"vol:chunking_mode":"pressio","vol:chunk_n":8}   [pjson: skipped by default]
+szx_1e6_vjson      szx     cpu   8      yes       {"pressio:abs":1e-6,"vol:chunking_mode":"vol","vol:chunk_n":8}
+szx_1e6_pjson      szx     cpu   8      yes       {"pressio:abs":1e-6,"vol:chunking_mode":"pressio","vol:chunk_n":8}   [pjson: skipped by default]
+cuszp_1e3_vjson    cuszp   gpu   8      yes       {"pressio:abs":1e-3,"cuszp:mode_str":"outlier","vol:chunking_mode":"vol","vol:chunk_n":8}
+cuszp_1e3_pjson    cuszp   gpu   8      yes       {"pressio:abs":1e-3,"cuszp:mode_str":"outlier","vol:chunking_mode":"pressio","vol:chunk_n":8}   [pjson: skipped by default]
+cuszp_1e6_vjson    cuszp   gpu   8      yes       {"pressio:abs":1e-6,"cuszp:mode_str":"outlier","vol:chunking_mode":"vol","vol:chunk_n":8}
+cuszp_1e6_pjson    cuszp   gpu   8      yes       {"pressio:abs":1e-6,"cuszp:mode_strname           dtype  rank src    dims                   MiB        needGiB    exists
+miranda        double 3    raw    256x384x384            288.0      0.6        yes
+ocean_temp     float  0    hdf5   (from file)            0.0        0.0        yes
+einspline37    float  1    raw    3390212880             12932.6    25.3       yes
+scale-T        float  3    raw    98x1200x1200           538.3      1.1        yes
+s3d            double 3    raw    500x500x500            953.7      1.9        yes
+nyx_baryon     float  0    hdf5   (from file)            0.0        0.0        yes
+MemAvailable: 721.0 GiB (needGiB is hbuf+rbuf only; the connector needs more)
+6/6 dataset paths readable
+":"outlier","vol:chunking_mode":"pressio","vol:chunk_n":8}   [pjson: skipped by default]
+sperr_pwe1e3       sperr   cpu   1      NO        {"sperr:mode_str":"pwe","sperr:tolerance":1e-3}
+sperr_pwe1e6       sperr   cpu   1      NO        {"sperr:mode_str":"pwe","sperr:tolerance":1e-6}
+sperr_pwe1e3_v8    sperr   cpu   8      NO        {"sperr:mode_str":"pwe","sperr:tolerance":1e-3,"vol:chunking_mode":"vol","vol:chunk_n":8}
+sperr_bpp2_v8      sperr   cpu   8      NO        {"sperr:mode_str":"bpp","sperr:tolerance":2.0,"vol:chunking_mode":"vol","vol:chunk_n":8}
+
+=== bench_comp_timing --h5 /lcrc/project/SDR/kdougherty/h5zcomp_bench/bench_h5zcomp_ocean_temp.h5 --out /home/kdougherty/hdf5_projs/H5Z-Libpressio/results/h5zcomp_ocean_temp/results_h5zcomp.csv --ext /home/kdougherty/hdf5_projs/H5Z-Libpressio/results/h5zcomp_ocean_temp/results_h5zcomp_ext.csv --only ocean_temp ===
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=per-entry (vol:chunk_n, default 1) reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     noop             N=1     r=0 C=  1.63 W=   627.28 F=    0.17 S=  336.91 X=   0.23 S2= 205.74 | E=  3.53 O=  0.34 R=   182.88 ms  ratio=   1.00x  file=123.1 MiB  RMSE=0.000e+00 maxae=0.000e+00
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     cuszp_1e3        N=1     r=0 C=  3.78 W=   359.63 F=    0.08 S=  358.02 X=   0.16 S2=  78.93 | E=  1.81 O=  0.24 R=   200.39 ms  ratio=   3.71x  file=33.2 MiB  RMSE=5.773e-04 maxae=1.000e-03
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     cuszp_1e6        N=1     r=0 C= 21.30 W=   455.16 F=    0.07 S=  190.88 X=   0.16 S2= 127.19 | E=  2.45 O=  0.23 R=   235.98 ms  ratio=   1.70x  file=72.5 MiB  RMSE=7.318e-07 maxae=1.907e-06
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     sz3_1e3          N=1     r=0 C=  5.11 W=  1752.00 F=    0.07 S=  150.53 X=   0.15 S2=  66.88 | E=  4.71 O=  0.24 R=   707.99 ms  ratio=   6.49x  file=19.0 MiB  RMSE=5.701e-04 maxae=9.999e-04
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+[FAIL] ocean_temp/sz3_1e6 maxae=6.675720e-06 exceeds 2x bound 1.000000e-06
+  ocean_temp     sz3_1e6          N=1     r=0 C=  2.59 W=  3261.56 F=    0.09 S=  157.37 X=   0.21 S2= 110.85 | E=  7.45 O=  0.36 R=  2213.48 ms  ratio=   1.95x  file=63.2 MiB  RMSE=6.689e-07 maxae=6.676e-06
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     bzip2            N=1     r=0 C=  2.15 W= 13241.56 F=    0.10 S=  172.43 X=   0.22 S2=  68.22 | E=  1.43 O=  0.37 R=  5702.45 ms  ratio=   1.51x  file=81.6 MiB  RMSE=0.000e+00 maxae=0.000e+00
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     zfp_cpu_r4       N=1     r=0 C=  4.12 W=  1066.88 F=    0.06 S=  343.58 X=   0.15 S2=  44.23 | E=  1.24 O=  0.22 R=   411.66 ms  ratio=   7.56x  file=16.3 MiB  RMSE=4.110e-03 maxae=3.760e-01
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     zfp_gpu_r4       N=1     r=0 C=  5.63 W=   212.05 F=    0.04 S=  122.77 X=   0.15 S2=  44.55 | E=  3.04 O=  0.24 R=   152.22 ms  ratio=  60.44x  file=2.0 MiB  RMSE=9.436e+00 maxae=1.073e+01
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     zfp_cpu_r8       N=1     r=0 C=  3.04 W=  1288.48 F=    0.08 S=  251.75 X=   0.16 S2=  43.47 | E=  2.19 O=  0.23 R=   547.90 ms  ratio=   3.78x  file=32.6 MiB  RMSE=2.793e-04 maxae=2.552e-02
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     zfp_gpu_r8       N=1     r=0 C=  3.68 W=   196.64 F=    0.04 S=  116.33 X=   0.15 S2=  42.48 | E=  1.16 O=  0.23 R=   161.73 ms  ratio=  30.22x  file=4.1 MiB  RMSE=9.436e+00 maxae=1.073e+01
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     zfp_cpu_r12      N=1     r=0 C=  2.28 W=  1446.27 F=    0.08 S=  300.56 X=   0.16 S2=  84.92 | E=  1.80 O=  0.23 R=   666.66 ms  ratio=   2.52x  file=48.9 MiB  RMSE=1.752e-05 maxae=1.611e-03
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     zfp_gpu_r12      N=1     r=0 C=  7.40 W=   298.58 F=    0.05 S=  155.29 X=   0.15 S2=  91.32 | E=  1.19 O=  0.23 R=   160.63 ms  ratio=  20.15x  file=6.1 MiB  RMSE=9.436e+00 maxae=1.073e+01
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     zfp_cpu_r16      N=1     r=0 C=  4.11 W=  1799.85 F=    0.08 S=  159.98 X=   0.15 S2= 128.21 | E=  6.73 O=  0.23 R=   774.98 ms  ratio=   1.89x  file=65.2 MiB  RMSE=1.114e-06 maxae=1.140e-04
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     zfp_gpu_r16      N=1     r=0 C=  3.13 W=   318.35 F=    0.04 S=  136.23 X=   0.20 S2= 138.74 | E=  1.84 O=  0.24 R=   172.25 ms  ratio=  15.11x  file=8.2 MiB  RMSE=9.436e+00 maxae=1.073e+01
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     zfp_1e3          N=1     r=0 C=  5.86 W=  1209.11 F=    0.06 S=  191.64 X=   0.15 S2=  89.64 | E=  1.22 O=  0.23 R=   578.85 ms  ratio=   3.26x  file=37.8 MiB  RMSE=4.144e-05 maxae=2.861e-04
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     zfp_1e6          N=1     r=0 C=  6.16 W=  1513.57 F=    0.07 S=  202.31 X=   0.17 S2= 173.77 | E=  1.13 O=  0.22 R=   860.61 ms  ratio=   1.57x  file=78.4 MiB  RMSE=7.738e-10 maxae=4.768e-07
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     szx_1e3          N=1     r=0 C=  6.03 W=   648.12 F=    0.07 S=  208.29 X=   0.15 S2=  54.80 | E=  2.54 O=  0.32 R=   342.16 ms  ratio=   2.35x  file=52.3 MiB  RMSE=1.916e-04 maxae=4.883e-04
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     szx_1e6          N=1     r=0 C=  3.79 W=   717.67 F=    0.09 S=  201.88 X=   0.62 S2= 194.20 | E=  1.42 O=  0.23 R=   382.79 ms  ratio=   1.35x  file=91.3 MiB  RMSE=0.000e+00 maxae=0.000e+00
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     noop_vjson       N=8     r=0 C= 12.00 W=   515.83 F=    0.06 S=  175.90 X=   0.13 S2= 168.57 | E=  3.77 O=  0.22 R=    61.63 ms  ratio=   1.00x  file=123.1 MiB  RMSE=0.000e+00 maxae=0.000e+00
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     bzip2_vjson      N=8     r=0 C=  9.67 W= 12180.13 F=    0.10 S=  214.91 X=   0.26 S2=  42.55 | E=  3.63 O=  0.36 R=  5611.43 ms  ratio=   1.51x  file=81.4 MiB  RMSE=0.000e+00 maxae=0.000e+00
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     sz3_1e3_vjson    N=8     r=0 C=  6.36 W=  1231.51 F=    0.08 S=  215.58 X=   0.19 S2= 157.48 | E=  5.32 O=  0.23 R=   653.53 ms  ratio=   5.85x  file=21.1 MiB  RMSE=5.495e-04 maxae=1.003e-03
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+[FAIL] ocean_temp/sz3_1e6_vjson maxae=4.768372e-06 exceeds 2x bound 1.000000e-06
+  ocean_temp     sz3_1e6_vjson    N=8     r=0 C=  5.43 W=  2853.39 F=    0.07 S=  494.02 X=   0.15 S2=  75.81 | E=  1.56 O=  0.23 R=  2193.36 ms  ratio=   1.80x  file=68.3 MiB  RMSE=6.353e-07 maxae=4.768e-06
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     szx_1e3_vjson    N=8     r=0 C=  3.42 W=   466.12 F=    0.07 S=  173.03 X=   0.15 S2= 124.85 | E=  1.55 O=  0.23 R=   191.50 ms  ratio=   2.35x  file=53.3 MiB  RMSE=1.917e-04 maxae=4.883e-04
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     szx_1e6_vjson    N=8     r=0 C=  3.23 W=   471.25 F=    0.09 S=  150.77 X=   0.14 S2= 173.83 | E=  1.23 O=  0.24 R=   206.35 ms  ratio=   1.35x  file=92.3 MiB  RMSE=0.000e+00 maxae=0.000e+00
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     cuszp_1e3_vjson  N=8     r=0 C=  3.03 W=   200.89 F=    0.05 S=  164.04 X=   0.16 S2=  48.94 | E=  1.10 O=  0.23 R=    56.70 ms  ratio=   3.71x  file=34.2 MiB  RMSE=5.773e-04 maxae=1.000e-03
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     cuszp_1e6_vjson  N=8     r=0 C=  4.48 W=   285.45 F=    0.08 S=  175.45 X=   0.14 S2=  91.74 | E=  2.20 O=  0.23 R=    73.47 ms  ratio=   1.70x  file=73.4 MiB  RMSE=7.318e-07 maxae=1.907e-06
+[skip] sperr_pwe1e3: codec 'sperr' not in this LibPressio build
+[skip] sperr_pwe1e6: codec 'sperr' not in this LibPressio build
+[skip] sperr_pwe1e3_v8: codec 'sperr' not in this LibPressio build
+[skip] sperr_bpp2_v8: codec 'sperr' not in this LibPressio build
+wrote /home/kdougherty/hdf5_projs/H5Z-Libpressio/results/h5zcomp_ocean_temp/results_h5zcomp.csv and /home/kdougherty/hdf5_projs/H5Z-Libpressio/results/h5zcomp_ocean_temp/results_h5zcomp_ext.csv (26 run, 0 failed configuration(s) recorded, 4 codec skip(s))
+
+=== summary (ratio / write / read, successful rows) ===
+dataset      compressor         kind       N     ratio    write_ms     read_ms     ok
+ocean_temp   noop               cpu        1     1.000      627.28      182.88      1
+ocean_temp   cuszp_1e3          gpu        1     3.708      359.63      200.39      1
+ocean_temp   cuszp_1e6          gpu        1     1.700      455.16      235.98      1
+ocean_temp   sz3_1e3            cpu        1     6.494     1752.00      707.99      1
+ocean_temp   sz3_1e6            cpu        1     1.949     3261.56     2213.48      0
+ocean_temp   bzip2              cpu        1     1.508    13241.56     5702.45      1
+ocean_temp   zfp_cpu_r4         cpu        1     7.556     1066.88      411.66      1
+ocean_temp   zfp_gpu_r4         gpu        1    60.444      212.05      152.22      1
+ocean_temp   zfp_cpu_r8         cpu        1     3.778     1288.48      547.90      1
+ocean_temp   zfp_gpu_r8         gpu        1    30.222      196.64      161.73      1
+ocean_temp   zfp_cpu_r12        cpu        1     2.518     1446.27      666.66      1
+ocean_temp   zfp_gpu_r12        gpu        1    20.148      298.58      160.63      1
+ocean_temp   zfp_cpu_r16        cpu        1     1.889     1799.85      774.98      1
+ocean_temp   zfp_gpu_r16        gpu        1    15.111      318.35      172.25      1
+ocean_temp   zfp_1e3            cpu        1     3.258     1209.11      578.85      1
+ocean_temp   zfp_1e6            cpu        1     1.571     1513.57      860.61      1
+ocean_temp   szx_1e3            cpu        1     2.354      648.12      342.16      1
+ocean_temp   szx_1e6            cpu        1     1.349      717.67      382.79      1
+ocean_temp   noop_vjson         cpu        8     1.000      515.83       61.63      1
+ocean_temp   bzip2_vjson        cpu        8     1.512    12180.13     5611.43      1
+ocean_temp   sz3_1e3_vjson      cpu        8     5.850     1231.51      653.53      1
+ocean_temp   sz3_1e6_vjson      cpu        8     1.802     2853.39     2193.36      0
+ocean_temp   szx_1e3_vjson      cpu        8     2.354      466.12      191.50      1
+ocean_temp   szx_1e6_vjson      cpu        8     1.349      471.25      206.35      1
+ocean_temp   cuszp_1e3_vjson    gpu        8     3.707      200.89       56.70      1
+ocean_temp   cuszp_1e6_vjson    gpu        8     1.700      285.45       73.47      1
+
+=== recorded failures (rep=-1) -- e.g. a single chunk > 4 GiB ===
+
+=== fidelity violations (bound_ok=0) ===
+  [FAIL] ocean_temp sz3_1e6 N=1 maxae=6.675720e-06 thr=1.000000e-06
+  [FAIL] ocean_temp sz3_1e6_vjson N=8 maxae=4.768372e-06 thr=1.000000e-06
+
+results: /home/kdougherty/hdf5_projs/H5Z-Libpressio/results/h5zcomp_ocean_temp   (rc=0)
+Job finished Mon Sep 28 11:11:26 CDT 2026
