@@ -1,7 +1,15 @@
 build*/
-results/
 *.h5
 *.o
 *.so
 CMakeUserPresets.json
 .vscode/
+
+# PBS job logs (h5zcomp_bench.o57182 ...) -- kept on the cluster under logs/
+*.o[0-9]*
+logs/
+
+# raw per-run results stay on the cluster; only the curated set is tracked
+results/*
+!results/MANIFEST.txt
+!results/final/

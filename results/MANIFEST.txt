@@ -1,0 +1,22 @@
+# results/MANIFEST.txt -- which runs make up the final filter results.
+# Later lines override earlier ones for the same (dataset, compressor, chunk_n).
+# Rebuild with:  python3 scripts/assemble_final.py results/MANIFEST.txt
+
+# Full sweep, 2026-09-28 (jobs 57182-57186). zfp_gpu rows predate the
+# zfp CUDA size workaround and are wrong -> excluded here, replaced below.
+h5zcomp_miranda       exclude=^zfp_gpu_
+h5zcomp_ocean_temp    exclude=^zfp_gpu_
+h5zcomp_scale-T       exclude=^zfp_gpu_
+h5zcomp_s3d           exclude=^zfp_gpu_
+h5zcomp_nyx_baryon    exclude=^zfp_gpu_
+
+# zfp_gpu reruns with the workaround (jobs 57191-57195)
+zfpgpu_miranda
+zfpgpu_ocean_temp
+zfpgpu_scale-T
+zfpgpu_s3d
+zfpgpu_nyx_baryon
+
+# einspline37: use ONLY the rerun with the >= 4 GiB chunk guard. The first run
+# (job 57187, old binary) silently stored corrupted N=1 chunks > 4 GiB.
+h5zcomp_einspline37_v2
