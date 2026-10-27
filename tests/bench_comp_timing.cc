@@ -300,7 +300,15 @@ static hid_t make_dcpl(const bench_dataset_t *d, const bench_compressor_t *c,
 
     /* Match the VOL: no fill-value writes, allocate late. */
     H5Pset_fill_time(dcpl, H5D_FILL_TIME_NEVER);
-    H5Pset_alloc_time(dcpl, H5D_ALLOC_TIME_LATE);
+    /* BENCH_ALLOC=incr: HDF5's default for chunked data. With LATE (or EARLY)
+     * and any filter, H5D__chunk_allocate pushes a fill chunk through the
+     * pipeline and writes it to EVERY chunk at the first write, regardless of
+     * H5D_FILL_TIME_NEVER -- an extra full-size compress + write the VOL never
+     * pays. LATE stays the default so earlier rows remain comparable. */
+    {
+        const char *a = std::getenv("BENCH_ALLOC");
+        H5Pset_alloc_time(dcpl, (a && !std::strcmp(a, "incr")) ? H5D_ALLOC_TIME_INCR : H5D_ALLOC_TIME_LATE);
+    }
 
     if (!c) {
         H5Pset_deflate(dcpl, (unsigned)deflate_level);

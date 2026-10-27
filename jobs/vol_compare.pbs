@@ -72,6 +72,7 @@ mkdir -p "$RESULTS" "$H5Z_SCRATCH" || exit 1
   echo "host $(hostname)  phases: $PHASES"
   nvidia-smi --query-gpu=name,driver_version --format=csv,noheader 2>/dev/null
   env | grep -E '^BENCH_|^H5ZCOMP_|_COMPS=|^ARMS=|^PROG_|^DECOUPLE_'
+  echo "BENCH_ALLOC=${BENCH_ALLOC:-incr}"
 } > "$RESULTS/provenance.txt"
 
 export HDF5_PLUGIN_PATH="$PROJECT_ROOT/$BUILD/lib"
@@ -80,6 +81,12 @@ printf 'dataset,chunk_n,nchunks_actual,chunk_elems,chunk_bytes\n' > "$BENCH_CHUN
 "$BIN" --list > "$RESULTS/matrix.txt"
 
 REPS="${BENCH_REPS:-1}"
+# HDF5's default allocation for chunked data. The harness default (LATE, to
+# match the VOL's DCPL) makes HDF5 compress and write a full-size fill chunk
+# into every chunk on the first write whenever a filter is present -- about
+# half of the filter's write time in the first runs. The VOL has no filter on
+# its byte dataset and never pays it. Set BENCH_ALLOC=late to reproduce those.
+export BENCH_ALLOC="${BENCH_ALLOC:-incr}"
 DATASETS="${BENCH_ONLY:-miranda,ocean_temp,einspline37,scale-T,s3d,nyx_baryon}"
 
 # run LABEL ARGS...  -> results_ext_LABEL_<dataset>.csv (+ results_h5zcomp_*, stdout_*)

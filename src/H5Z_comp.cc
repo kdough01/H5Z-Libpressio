@@ -446,11 +446,23 @@ struct comp_ctx {
     size_t                     dims[H5S_MAX_RANK];
     struct pressio            *library;
     struct pressio_compressor *compressor;
+    /* Decompression uses its own clone: LibPressio's sz3 plugin loads the
+     * configuration stored in the stream into the compressor on decompress,
+     * and later compress calls on that object then produce a different (in
+     * the case measured, ~9% larger) stream. Keeping the two directions on
+     * separate objects makes every compress independent of earlier reads. */
+    struct pressio_compressor *decompressor;
     comp_h5z_cfg               h5z;
 };
 
+static struct pressio_compressor *comp_decompressor(struct comp_ctx *x) {
+    if (!x->decompressor) x->decompressor = pressio_compressor_clone(x->compressor);
+    return x->decompressor ? x->decompressor : x->compressor;
+}
+
 static void comp_ctx_free(comp_ctx *x) {
     if (!x) return;
+    if (x->decompressor) pressio_compressor_release(x->decompressor);
     if (x->compressor) pressio_compressor_release(x->compressor);
     if (x->library)    pressio_release(x->library);
     delete x;
@@ -782,9 +794,9 @@ static int comp_decompress_core(comp_ctx *x, const void *cbuf, size_t csize, siz
     output = pressio_data_new_nonowning_domain(out_dtype, dst, out_ndims, out_dims, dst_domain);
     if (!input || !output) goto done;
 
-    if (pressio_compressor_decompress(x->compressor, input, output) != 0) {
+    if (pressio_compressor_decompress(comp_decompressor(x), input, output) != 0) {
         fprintf(stderr, "[H5Z_comp] decompress '%s' failed: %s\n",
-                x->id.c_str(), pressio_compressor_error_msg(x->compressor));
+                x->id.c_str(), pressio_compressor_error_msg(comp_decompressor(x)));
         goto done;
     }
     if (host_dst) {
