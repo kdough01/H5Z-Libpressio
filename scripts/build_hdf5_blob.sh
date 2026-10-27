@@ -39,10 +39,17 @@ if [ "$(printf '%s\n%s\n' "$need" "$have" | sort -V | head -1)" != "$need" ]; th
     echo "ERROR: cmake $have < $need (module load cmake, or pip install --user cmake)"; exit 1
 fi
 
+# HDF5_BLOB_REPO / HDF5_BLOB_BRANCH select another repository/branch, e.g. the
+# fork carrying the dataset-level filter callbacks (dset_write/dset_read):
+#   HDF5_BLOB_REPO=https://github.com/kdough01/hdf5-blob-extensions \
+#   HDF5_BLOB_BRANCH=blob-dset-io HDF5_BLOB_SRC=$HOME/src/hdf5-blob-dset-io \
+#   bash scripts/build_hdf5_blob.sh $HOME/sw/hdf5-blob-dset-io origin/blob-dset-io
+REPO="${HDF5_BLOB_REPO:-https://github.com/brtnfld/hdf5.git}"
+BRANCH="${HDF5_BLOB_BRANCH:-blob}"
 if [ ! -d "$SRC/.git" ]; then
-    git clone https://github.com/brtnfld/hdf5.git "$SRC"
+    git clone "$REPO" "$SRC"
 fi
-git -C "$SRC" fetch origin blob
+git -C "$SRC" fetch origin "$BRANCH:refs/remotes/origin/$BRANCH"
 git -C "$SRC" checkout --detach "$REF"
 echo "HEAD   : $(git -C "$SRC" log --oneline -1)"
 

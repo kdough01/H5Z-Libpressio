@@ -51,11 +51,31 @@ device-resident through compression, and transfers only the (small) compressed
 bytes — the uncompressed data never touches the host. Position determines
 residency, and a filter's position forces host endpoints.
 
+## 3. With dataset-level callbacks (`dset_write`/`dset_read`) — §2 no longer holds
+
+§2 is true of the per-chunk callback, which is all a filter had. The
+`blob-dset-io` branch of `hdf5-blob-extensions` adds two optional callbacks to
+`H5Z_class3_t`: HDF5 offers each `H5Dwrite`/`H5Dread` to the filter before it
+touches the buffer or splits the request into chunks. That moves the filter to
+the VOL's position for the requests it accepts, while the data still lands in
+the dataset's own chunks through `H5Dwrite_chunk`.
+
+- **Native buffers** (`ex_native_gpu.c`): the application's device pointer goes
+  to the codec untouched; only compressed bytes cross to the host.
+- **Unit ≠ chunk** (`ex_decoupled_chunks.c`): `"h5z:group"` in the options JSON
+  makes one compression unit out of several storage chunks.
+- **Progressive reads** (`ex_progressive.c`): the unit's stream is striped over
+  its storage chunks, so a prefix of the stream is a prefix of the chunks.
+
+The large-config step of §1 also disappears on this path: `init` reads the blob
+and the callbacks use it, so no `H5Pget_comp_json` call is needed.
+
 ## Mapping to the CompVOL limitations
 
-| # | Limitation | H5Zcomp v2 |
-|---|---|---|
-| 1 | host residency (device↔host copies) | **open** — filters always copy; §2 |
-| 2 | synchronous per-chunk | open |
-| 3 | config capped at ~1 KB `cd_values` | **closed** — inline ≤ ~60 KiB (autonomous), larger via blob+DXPL; §1 |
-| 4 | compression unit = storage chunk | open |
+| # | Limitation | per-chunk filter (v2) | with `dset_write`/`dset_read` |
+|---|---|---|---|
+| 1 | host residency (device↔host copies) | **open** — filters always copy; §2 | **closed** for whole-unit transfers of contiguous units: `H5Pset_comp_native_buffer` (not yet run on a GPU) |
+| 2 | synchronous per-chunk | open | open (the transfer is synchronous inside `H5Dwrite`, with the caller's DXPL) |
+| 3 | config capped at ~1 KB `cd_values` | **closed** — inline ≤ ~60 KiB (autonomous), larger via blob+DXPL; §1 | closed, and blob configs need no app step |
+| 4 | compression unit = storage chunk | open | **closed**: `"h5z:group"`; no 4 GiB cap on a unit |
+| — | progressive / ROI reads | not expressible | `"h5z:progressive"` + `H5Pset_comp_progressive[_roi]` (sperr) |

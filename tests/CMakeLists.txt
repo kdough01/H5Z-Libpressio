@@ -30,6 +30,7 @@ h5zc_test(test_ci              test_ci.c)
 h5zc_test(test_cpu_write       test_cpu_write.c)
 h5zc_test(test_error_miranda   test_error_miranda.c)
 h5zc_test(test_large_config    test_large_config.c)
+h5zc_test(test_dset_io         test_dset_io.c)
 h5zc_test(test_time_miranda    test_time_miranda.c)
 h5zc_test(test_time_hurricane  test_time_hurricane.c)
 h5zc_test(plugin_fixture_write plugin_fixture_write.c)
@@ -66,6 +67,9 @@ h5zc_add(ci.cpu_write       COMMAND $<TARGET_FILE:test_cpu_write>     LABELS ci)
 h5zc_add(ci.errors          COMMAND $<TARGET_FILE:test_error_miranda> LABELS ci)
 h5zc_add(ci.large_config    COMMAND $<TARGET_FILE:test_large_config>  LABELS ci)
 h5zc_add(ci.errors_chunked  COMMAND $<TARGET_FILE:test_error_miranda> LABELS ci ENV H5ZCOMP_CHUNK_N=8)
+# dataset-level path: native buffers, h5z:group, progressive reads
+# (exits 77 = skipped when HDF5 lacks H5Z_class3_t dset_write/dset_read)
+h5zc_add(ci.dset_io         COMMAND $<TARGET_FILE:test_dset_io>       LABELS ci)
 
 # plugin autoload: fixture writer (linked) -> reader (plugin path only)
 set(_fx ${CMAKE_CURRENT_BINARY_DIR}/run/plugin_fixture.h5)
@@ -79,6 +83,10 @@ set_tests_properties(ci.plugin_autoload PROPERTIES LABELS ci FIXTURES_REQUIRED p
 if(BUILD_EXAMPLES)
   h5zc_add(ci.ex_roundtrip_noop COMMAND $<TARGET_FILE:ex_roundtrip> noop "{}" LABELS ci)
   h5zc_add(ci.ex_large_config   COMMAND $<TARGET_FILE:ex_large_config>       LABELS ci)
+  # the three dataset-level examples; each exits 77 when it cannot run here
+  h5zc_add(ci.ex_native_buffer    COMMAND $<TARGET_FILE:ex_native_gpu> noop "{}" malloc LABELS ci)
+  h5zc_add(ci.ex_decoupled_chunks COMMAND $<TARGET_FILE:ex_decoupled_chunks> noop "\"_x\":0" LABELS ci)
+  h5zc_add(ci.ex_progressive      COMMAND $<TARGET_FILE:ex_progressive>          LABELS ci)
 endif()
 
 # harness sanity: lists the matrix + which codecs/datasets are reachable
@@ -91,6 +99,11 @@ h5zc_add(data.miranda_bench_smoke
          COMMAND $<TARGET_FILE:bench_comp_timing> --only miranda --comp sz3_1e3
                  --out smoke.csv --ext smoke.ext.csv
          LABELS data ENV BENCH_FSYNC=0 BENCH_DROP_CACHE=0)
+if(USE_CUDA AND BUILD_EXAMPLES)
+  # device-resident H5Dwrite/H5Dread (a CUDA pointer as the H5Dwrite buffer)
+  h5zc_add(gpu.ex_native_cuszp COMMAND $<TARGET_FILE:ex_native_gpu> cuszp "{\"pressio:abs\":1e-3}" cudamalloc
+           LABELS gpu)
+endif()
 if(USE_CUDA)
   # one process per GPU codec: a CUDA fault is sticky for the whole process
   foreach(gc cuszp cusz nvcomp)

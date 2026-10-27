@@ -46,6 +46,67 @@ herr_t H5Pset_comp_dxpl(hid_t dxpl_id, const char *options_json);
  * free(). Returns negative if the filter is absent or carries no blob. */
 herr_t H5Pget_comp_json(hid_t dcpl_id, char **options_json);
 
+/* ----------------------------------------------------------------------------
+ * Dataset-level path (needs an HDF5 whose H5Z_class3_t has dset_write /
+ * dset_read; H5Zcomp_has_dset_io() says whether this build has it).
+ *
+ * Two settings are part of the dataset and go in the options JSON given to
+ * H5Pset_comp, under the filter's own "h5z:" prefix:
+ *
+ *   "h5z:group":"4,1,1"     one compression unit = 4x1x1 storage chunks.
+ *                           0 in a position = every chunk along that
+ *                           dimension; "all" (or 0) = the whole dataset.
+ *   "h5z:progressive":true  write each unit so a prefix of its stream decodes
+ *                           (codec must support it: sperr).
+ *
+ * The rest are per-transfer and go on the DXPL passed to H5Dwrite / H5Dread.
+ * A DXPL with none of them, on a dataset without "h5z:group", behaves exactly
+ * as before (per-chunk filter).
+ * --------------------------------------------------------------------------*/
+
+/* The buffer passed to H5Dwrite/H5Dread with this DXPL is memory of LibPressio
+ * domain `domain` (e.g. "cudamalloc" for a CUDA device pointer). HDF5 does not
+ * touch it; the codec reads/writes it in place and only compressed bytes cross
+ * to the host. Requirements: memory type == dataset type, whole compression
+ * units selected, each unit contiguous in the buffer (units spanning all but
+ * the first dimension). NULL or "" clears the setting. */
+herr_t H5Pset_comp_native_buffer(hid_t dxpl_id, const char *domain);
+
+/* Progressive read: fetch and decode only the first `pct`% (1..100) of every
+ * compression unit's stream. With "h5z:group" the stream is striped over the
+ * unit's storage chunks, so this reads only the first storage chunks of each
+ * unit. The dataset must have been written with "h5z:progressive":true. */
+herr_t H5Pset_comp_progressive(hid_t dxpl_id, unsigned pct);
+
+/* Region-of-interest form: units intersecting the box [start, start+count)
+ * (element coordinates, `rank` = dataset rank) are read at `pct_in`%, all
+ * other units at `pct_out`%. */
+herr_t H5Pset_comp_progressive_roi(hid_t dxpl_id, int rank, const hsize_t *start, const hsize_t *count,
+                                   unsigned pct_in, unsigned pct_out);
+
+/* Send an ordinary host-buffer H5Dwrite/H5Dread through the dataset-level path
+ * as well: units are compressed straight from (decoded straight into) the
+ * application's buffer inside the call, bypassing the chunk cache. Off by
+ * default; the environment variable H5ZCOMP_DIRECT=1 turns it on everywhere. */
+herr_t H5Pset_comp_direct(hid_t dxpl_id, int enable);
+
+/* What the last H5Dwrite/H5Dread on the calling thread did. */
+typedef struct H5Z_comp_io_stats_t {
+    int                handled;      /* 1: it went through the dataset-level path           */
+    int                native;       /* 1: the buffer was used in its own domain            */
+    unsigned long long units;        /* compression units touched                           */
+    unsigned long long chunks;       /* storage chunks read or written                      */
+    unsigned long long bytes_raw;    /* uncompressed bytes delivered / consumed             */
+    unsigned long long bytes_stored; /* stored size of the touched units (all their chunks) */
+    unsigned long long bytes_io;     /* bytes actually read from / written to the file      */
+    unsigned long long bytes_staged; /* bytes copied through a host scratch buffer (0 =     */
+                                     /* every unit was (de)coded in place)                  */
+} H5Z_comp_io_stats_t;
+herr_t H5Zcomp_get_io_stats(H5Z_comp_io_stats_t *stats);
+
+/* 1 if this build of the filter has the dataset-level path, else 0. */
+int H5Zcomp_has_dset_io(void);
+
 #ifdef __cplusplus
 }
 #endif

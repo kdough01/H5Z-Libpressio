@@ -79,6 +79,10 @@ check_c_source_compiles("
 #include \"hdf5.h\"
 int main(void) { H5Z_init_func_t f = 0; H5Z_class3_t c; c.init = f; (void)c; return 0; }"
   H5ZCOMP_HAVE_FILTER_STATE)
+check_c_source_compiles("
+#include \"hdf5.h\"
+int main(void) { H5Z_dset_write_func_t w = 0; H5Z_class3_t c; c.dset_write = w; c.dset_read = 0; (void)c; return 0; }"
+  H5ZCOMP_HAVE_DSET_IO)
 cmake_pop_check_state()
 
 if(NOT H5ZCOMP_HAVE_BLOB_API)
@@ -93,6 +97,22 @@ else()
   message(STATUS "HDF5 filter API: class3 without per-dataset state (blob@e77c5db layout)")
 endif()
 
+if(H5ZCOMP_HAVE_DSET_IO)
+  message(STATUS "HDF5 filter API: dataset-level callbacks (dset_write/dset_read) -> "
+                 "native buffers, h5z:group, progressive reads ENABLED")
+else()
+  message(STATUS "HDF5 filter API: no dataset-level callbacks -> per-chunk filter only "
+                 "(native buffers, h5z:group and progressive reads need the patched blob branch)")
+endif()
+
+# Optional: SPERR, for progressive (prefix) decode, and the LibPressio SPERR
+# plugin, so "sperr" is available without LD_PRELOADing liblibpressio_sperr.so.
+find_package(PkgConfig QUIET)
+if(PkgConfig_FOUND)
+  pkg_search_module(H5ZCOMP_SPERR QUIET IMPORTED_TARGET SPERR)
+endif()
+find_package(LibPressioSperr QUIET)
+
 # ---------------------------------------------------------------------------
 # The filter: one shared object, plugin + linkable API
 # ---------------------------------------------------------------------------
@@ -104,6 +124,21 @@ target_include_directories(H5Zcomp PUBLIC
 target_link_libraries(H5Zcomp PUBLIC ${H5ZCOMP_HDF5_TARGET} PRIVATE LibPressio::libpressio)
 if(H5ZCOMP_HAVE_FILTER_STATE)
   target_compile_definitions(H5Zcomp PRIVATE H5ZCOMP_HAVE_FILTER_STATE=1)
+endif()
+if(H5ZCOMP_HAVE_DSET_IO)
+  target_compile_definitions(H5Zcomp PRIVATE H5ZCOMP_HAVE_DSET_IO=1)
+endif()
+if(TARGET PkgConfig::H5ZCOMP_SPERR)
+  target_link_libraries(H5Zcomp PRIVATE PkgConfig::H5ZCOMP_SPERR)
+  target_compile_definitions(H5Zcomp PRIVATE H5ZCOMP_HAVE_SPERR=1)
+  message(STATUS "SPERR found: progressive decode enabled for sperr")
+else()
+  message(STATUS "SPERR not found: progressive reads disabled (set PKG_CONFIG_PATH to SPERR.pc)")
+endif()
+if(TARGET LibPressioSperr::libpressio_sperr)
+  target_link_libraries(H5Zcomp PRIVATE LibPressioSperr::libpressio_sperr)
+  target_compile_definitions(H5Zcomp PRIVATE H5ZCOMP_HAVE_LIBPRESSIO_SPERR=1)
+  message(STATUS "LibPressioSperr found: 'sperr' is linked in (no LD_PRELOAD needed)")
 endif()
 
 # GPU codecs: no CUDA is compiled into the filter. Device/host transfers are
