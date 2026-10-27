@@ -1,10 +1,10 @@
 #!/bin/bash
 #PBS -N h5zcomp_vs_vol
 #PBS -l select=1:ncpus=16:ngpus=1:mpiprocs=1:mem=256gb
-#PBS -l walltime=12:00:00
+#PBS -l walltime=04:00:00
 #PBS -j oe
 #PBS -A SDR
-#PBS -q gpu
+#PBS -q backfill
 #
 # The VOL experiments again, through H5Zcomp, so the two can be compared
 # directly. Each phase mirrors one VOL job in vol-external-passthrough/tests:
