@@ -46,6 +46,14 @@ target_include_directories(bench_comp_timing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 target_compile_definitions(bench_comp_timing PRIVATE BENCH_DATA_ROOT="${BENCH_DATA_ROOT}")
 target_link_libraries(bench_comp_timing PRIVATE ${H5ZC_TEST_LIBS})
 target_link_options(bench_comp_timing PRIVATE -rdynamic)
+# --arm devres|rtrip needs a real device buffer
+if(USE_CUDA)
+  find_package(CUDAToolkit QUIET)
+  if(CUDAToolkit_FOUND)
+    target_link_libraries(bench_comp_timing PRIVATE CUDA::cudart)
+    target_compile_definitions(bench_comp_timing PRIVATE BENCH_HAVE_CUDA=1)
+  endif()
+endif()
 
 # ---------------------------------------------------------------------------
 # ctest registrations. Each test runs in its own directory so the .h5 files

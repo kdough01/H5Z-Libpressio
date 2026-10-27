@@ -1,0 +1,178 @@
+#!/bin/bash
+#PBS -N h5zcomp_vs_vol
+#PBS -l select=1:ncpus=16:ngpus=1:mpiprocs=1:mem=256gb
+#PBS -l walltime=12:00:00
+#PBS -j oe
+#PBS -A SDR
+#PBS -q gpu
+#
+# The VOL experiments again, through H5Zcomp, so the two can be compared
+# directly. Each phase mirrors one VOL job in vol-external-passthrough/tests:
+#
+#   matrix       bench_vol_timing.pbs (run 52888): every dataset x codec at
+#                N = 1, 8, 16 compression units, through the per-chunk filter
+#                (path=chunk) and through the dataset-level path (path=direct).
+#                Pairs with the VOL's native and vol_N8 / vol_N16 rows.
+#   decouple     the chunk-size question: N = 1..32 storage chunks, one unit
+#                per chunk (path=chunk) vs ONE unit striped over all of them
+#                ("h5z:group":"all"). Pairs with the VOL's native vs vol_N rows.
+#   residency    device_resident.pbs: GPU codecs x datasets x the three arms
+#                devres / rtrip / hostsim, same definitions as the VOL.
+#   progressive  run_progressive.sh: SPERR progressive reads at 5..100%, cold
+#                cache, 3 reps, on the VOL's datasets (scale-T pwe1e3, s3d
+#                pwe1e3 and pwe1e6), one unit striped over many small chunks.
+#
+#   qsub -V jobs/vol_compare.pbs                          # all phases
+#   qsub -V -v PHASES=residency jobs/vol_compare.pbs      # one phase
+#   qsub -V -v PHASES="decouple progressive",BENCH_REPS=3 jobs/vol_compare.pbs
+#
+# Run with -V from a shell where `source scripts/env.sh` works and HDF5_BLOB
+# points at the hdf5-blob-extensions (blob-dset-io) install, with the SPERR
+# paths exported (see README). The build is USE_CUDA=ON so devres/rtrip use
+# real device buffers.
+#
+# Results land in results/vs_vol_<jobid>/. At the end the job runs
+#   scripts/plot_vol_vs_filter.py
+# against the VOL result folders named by VOL_RESULTS / VOL_MATRIX /
+# VOL_DEVRES / VOL_PROG_* (defaults below) and writes the figures to
+# results/vs_vol_<jobid>/plots/.
+#
+# Knobs: PHASES, BENCH_REPS, BENCH_ONLY (datasets), MATRIX_COMPS,
+#        DECOUPLE_COMPS, DECOUPLE_N, GPU_COMPS, ARMS, PROG_PCTS, PROG_REPS,
+#        BENCH_FSYNC / BENCH_DROP_CACHE / BENCH_SYNC_DIR (default on, as the VOL)
+set -u
+cd "${PBS_O_WORKDIR:-$(pwd)}"
+[ -f CMakeLists.txt ] || cd ..
+PROJECT_ROOT=$(pwd)
+echo "Job started $(date) on $(hostname)"
+
+source scripts/env.sh
+
+PHASES="${PHASES:-matrix decouple residency progressive}"
+TAG="vs_vol_${PBS_JOBID%%.*}"; [ "$TAG" = "vs_vol_" ] && TAG="vs_vol_local_$(date +%Y%m%d_%H%M%S)"
+BUILD="build_${TAG}"
+BIN="$BUILD/bin/bench_comp_timing"
+
+USE_CUDA=1 h5zc_build "$BUILD" || { echo "ERROR: build failed -- refusing to run a stale binary"; exit 1; }
+grep -q "^H5ZCOMP_HAVE_DSET_IO:INTERNAL=1" "$BUILD/CMakeCache.txt" || {
+    echo "ERROR: this build has no dataset-level filter callbacks -- HDF5_BLOB=$HDF5_BLOB is not the"
+    echo "       blob-dset-io install. Only the per-chunk rows could be measured; stopping."; exit 1; }
+
+RESULTS="$PROJECT_ROOT/results/$TAG"
+mkdir -p "$RESULTS" "$H5Z_SCRATCH" || exit 1
+{
+  git log -1 --format='H5Z-Libpressio %H %s'
+  cat "$HDF5_BLOB/HDF5_BLOB_COMMIT" 2>/dev/null
+  echo "host $(hostname)  phases: $PHASES"
+  nvidia-smi --query-gpu=name,driver_version --format=csv,noheader 2>/dev/null
+  env | grep -E '^BENCH_|^H5ZCOMP_|_COMPS=|^ARMS=|^PROG_|^DECOUPLE_'
+} > "$RESULTS/provenance.txt"
+
+export HDF5_PLUGIN_PATH="$PROJECT_ROOT/$BUILD/lib"
+export BENCH_CHUNKINFO="$RESULTS/chunkinfo.csv"
+printf 'dataset,chunk_n,nchunks_actual,chunk_elems,chunk_bytes\n' > "$BENCH_CHUNKINFO"
+"$BIN" --list > "$RESULTS/matrix.txt"
+
+REPS="${BENCH_REPS:-1}"
+DATASETS="${BENCH_ONLY:-miranda,ocean_temp,einspline37,scale-T,s3d,nyx_baryon}"
+
+# run LABEL ARGS...  -> results_ext_LABEL.csv (+ results_h5zcomp_LABEL.csv, stdout log)
+run () {
+    local label="$1"; shift
+    local h5="$H5Z_SCRATCH/${TAG}_${label}.h5"
+    echo; echo "=== $label : $* ==="
+    timeout --signal=KILL "${RUN_TIMEOUT:-3600}" "$BIN" --h5 "$h5" --reps "$REPS" \
+        --out "$RESULTS/results_h5zcomp_${label}.csv" --ext "$RESULTS/results_ext_${label}.csv" "$@" \
+        2>&1 | tee -a "$RESULTS/stdout_${label}.txt" | grep -E "^  |FAIL|ERR|skip|SKIP"
+    local rc=${PIPESTATUS[0]}
+    [ $rc -eq 137 ] && echo "  [FAIL] $label killed by timeout (${RUN_TIMEOUT:-3600}s)"
+    rm -f "$h5"
+    return 0
+}
+
+# ---------------------------------------------------------------------------
+# matrix: the VOL's timing sweep, both filter paths
+# ---------------------------------------------------------------------------
+MATRIX_COMPS="${MATRIX_COMPS:-noop,sz3_1e3,sz3_1e6,szx_1e3,szx_1e6,zfp_cpu_r4,zfp_cpu_r8,zfp_cpu_r12,zfp_cpu_r16,cuszp_1e3,cuszp_1e6,zfp_gpu_r4,zfp_gpu_r8,zfp_gpu_r12,zfp_gpu_r16}"
+if [[ " $PHASES " == *" matrix "* ]]; then
+    for path in chunk direct; do
+        for n in 1 8 16; do
+            run "matrix_${path}_N${n}" --only "$DATASETS" --comp "$MATRIX_COMPS" --chunk-n "$n" --path "$path"
+        done
+    done
+fi
+
+# ---------------------------------------------------------------------------
+# decouple: ratio / time vs storage-chunk count, per-chunk units vs one unit
+# ---------------------------------------------------------------------------
+DECOUPLE_COMPS="${DECOUPLE_COMPS:-sz3_1e3,szx_1e3,zfp_cpu_r8,cuszp_1e3}"
+DECOUPLE_N="${DECOUPLE_N:-1 2 4 8 16 32}"
+if [[ " $PHASES " == *" decouple "* ]]; then
+    for n in $DECOUPLE_N; do
+        run "decouple_chunk_N${n}" --only "$DATASETS" --comp "$DECOUPLE_COMPS" --chunk-n "$n"
+        run "decouple_group_N${n}" --only "$DATASETS" --comp "$DECOUPLE_COMPS" --chunk-n "$n" --group all
+    done
+fi
+
+# ---------------------------------------------------------------------------
+# residency: the VOL's three arms
+# ---------------------------------------------------------------------------
+GPU_COMPS="${GPU_COMPS:-cuszp_1e3,cuszp_1e6,zfp_gpu_r4,zfp_gpu_r8,zfp_gpu_r12,zfp_gpu_r16}"
+ARMS="${ARMS:-devres rtrip hostsim}"
+if [[ " $PHASES " == *" residency "* ]]; then
+    for arm in $ARMS; do
+        # einspline37 (12.6 GiB) cannot be ONE HDF5 chunk; as one compression
+        # unit striped over 4 chunks it can -- the VOL's N=1 equivalent.
+        others=$(echo "$DATASETS" | tr ',' '\n' | grep -v '^einspline37$' | paste -sd, -)
+        [ -n "$others" ] && run "residency_${arm}" --only "$others" --comp "$GPU_COMPS" --arm "$arm"
+        if echo ",$DATASETS," | grep -q ",einspline37,"; then
+            run "residency_${arm}_qmc_group" --only einspline37 --comp "$GPU_COMPS" --arm "$arm" \
+                --chunk-n 4 --group all
+        fi
+    done
+fi
+
+# ---------------------------------------------------------------------------
+# progressive: the VOL's SPERR progressive reads
+#   scale-T 98x1200x1200 -> 98 one-plane chunks; s3d 500^3 -> 100 five-plane chunks
+# ---------------------------------------------------------------------------
+PROG_PCTS="${PROG_PCTS:-5,10,25,50,75,100}"
+PROG_REPS="${PROG_REPS:-3}"
+if [[ " $PHASES " == *" progressive "* ]]; then
+    for spec in "scale-T:sperr_pwe1e3:98" "s3d:sperr_pwe1e3:100" "s3d:sperr_pwe1e6:100"; do
+        IFS=: read -r ds comp n <<< "$spec"
+        echo ",$DATASETS," | grep -q ",$ds," || continue
+        REPS="$PROG_REPS" run "progressive_${ds}_${comp}" --only "$ds" --comp "$comp" --chunk-n "$n" \
+            --group all --progressive "$PROG_PCTS" --prog-csv "$RESULTS/progressive_${ds}_${comp}.csv"
+    done
+fi
+
+# ---------------------------------------------------------------------------
+# summary + plots
+# ---------------------------------------------------------------------------
+echo
+echo "=== recorded failures (rep=-1) ==="
+awk -F, 'FNR>1 && $5=="-1" {f=FILENAME; sub(/.*results_ext_/,"",f); print "  "f": "$1" "$2" N="$4}' \
+    "$RESULTS"/results_ext_*.csv 2>/dev/null
+echo "=== fidelity violations (bound_ok=0) ==="
+awk -F, 'FNR>1 && $5!="-1" && $21=="0" {print "  "$1" "$2" N="$4" "$25" "$26" maxae="$20" thr="$19}' \
+    "$RESULTS"/results_ext_*.csv 2>/dev/null
+echo "=== devres rows that did not stay native (must be empty) ==="
+grep -h "arm=devres but" "$RESULTS"/stdout_residency_* 2>/dev/null
+
+VOL_RESULTS="${VOL_RESULTS:-$HOME/hdf5_projs/vol-external-passthrough/tests/results}"
+PLOT_ARGS=(--filter "$RESULTS" --out "$RESULTS/plots"
+           --vol-matrix "$VOL_RESULTS/${VOL_MATRIX:-20260811_140354_52888}"
+           --vol-devres "$VOL_RESULTS/${VOL_DEVRES:-device_resident_tests}")
+for p in ${VOL_PROG:-prog_20260818_140442_53500 prog_20260818_134437_53492 prog_20260818_131707_53488}; do
+    PLOT_ARGS+=(--vol-prog "$VOL_RESULTS/$p")
+done
+[ -d "$PROJECT_ROOT/results/final" ] && PLOT_ARGS+=(--filter-baseline "$PROJECT_ROOT/results/final")
+echo
+echo "=== plots: scripts/plot_vol_vs_filter.py ${PLOT_ARGS[*]} ==="
+python3 scripts/plot_vol_vs_filter.py "${PLOT_ARGS[@]}" || \
+    echo "  plotting failed (python3 -m pip install --user matplotlib numpy) -- rerun the line above by hand"
+
+echo
+echo "results: $RESULTS"
+echo "Job finished $(date)"

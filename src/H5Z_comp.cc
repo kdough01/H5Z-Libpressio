@@ -833,11 +833,26 @@ static void *comp_decompress(comp_ctx *x, const void *cbuf, size_t csize, size_t
 /* ---------------------------------------------------------------------------
  * H5Z_class3_t callbacks
  * ------------------------------------------------------------------------ */
+/* What a grouped dataset's chunk holds when HDF5 allocated it with a fill
+ * template (H5D_ALLOC_TIME_EARLY/LATE run the fill chunk through the pipeline
+ * once, with no chunk position) and it was never written: a unit that reads
+ * as the fill value. */
+#define H5Z_COMP_FILL_MAGIC 0x465A3548u   /* "H5ZF" */
+
 static size_t comp_filter_impl(unsigned flags, size_t cd_nelmts, const unsigned cd_values[],
-                               hid_t dxpl_id, size_t nbytes, size_t *buf_size, void **buf) {
+                               hid_t dxpl_id, const hsize_t *scaled, size_t nbytes, size_t *buf_size,
+                               void **buf) {
     try {
         comp_ctx *x = comp_ctx_get(cd_values, cd_nelmts, dxpl_id);
         if (!x) return 0;
+        if (x->h5z.grouped && !(flags & H5Z_FLAG_REVERSE) && scaled == NULL) {
+            void *out = H5allocate_memory(8, 0);
+            if (!out) return 0;
+            const uint32_t v[2] = { H5Z_COMP_FILL_MAGIC, 1u };
+            memcpy(out, v, 8);
+            H5free_memory(*buf); *buf = out; *buf_size = 8;
+            return 8;
+        }
         if (x->h5z.grouped) {
             /* A grouped dataset's chunks hold SEGMENTS of a unit's stream, not
              * one stream each; only the dataset-level callbacks can (de)code
@@ -869,15 +884,15 @@ static size_t comp_filter_impl(unsigned flags, size_t cd_nelmts, const unsigned 
 static size_t H5Z_filter2_comp(unsigned flags, size_t cd_nelmts, const unsigned cd_values[],
                                hid_t dxpl_id, const hsize_t *scaled, size_t ndims, void *state,
                                size_t nbytes, size_t *buf_size, void **buf) {
-    (void)scaled; (void)ndims; (void)state;
-    return comp_filter_impl(flags, cd_nelmts, cd_values, dxpl_id, nbytes, buf_size, buf);
+    (void)ndims; (void)state;
+    return comp_filter_impl(flags, cd_nelmts, cd_values, dxpl_id, scaled, nbytes, buf_size, buf);
 }
 #else
 static size_t H5Z_filter2_comp(unsigned flags, size_t cd_nelmts, const unsigned cd_values[],
                                hid_t dxpl_id, const hsize_t *scaled, size_t ndims,
                                size_t nbytes, size_t *buf_size, void **buf) {
-    (void)scaled; (void)ndims;
-    return comp_filter_impl(flags, cd_nelmts, cd_values, dxpl_id, nbytes, buf_size, buf);
+    (void)ndims;
+    return comp_filter_impl(flags, cd_nelmts, cd_values, dxpl_id, scaled, nbytes, buf_size, buf);
 }
 #endif
 
@@ -1613,6 +1628,7 @@ static htri_t H5Z_comp_dset_read(void *state, hid_t dset_id, hid_t mem_type_id, 
                 comp_unit_members(r, u, members);
                 int rc = comp_read_chunk(dset_id, members[0].data(), part);
                 if (rc < 0) return -1;
+                if (rc == 1 && part.size() == 8 && comp_get(part.data(), 4) == H5Z_COMP_FILL_MAGIC) rc = 0;
                 if (rc == 0) missing = true;
                 else {
                     const size_t hs = comp_seg_hdr_size(r.rank);

@@ -317,6 +317,36 @@ static void test_group(const char *fname, hid_t file, const float *w) {
         H5Pclose(dcpl); H5Sclose(space); free(rd);
     }
 
+    /* H5D_ALLOC_TIME_LATE / EARLY push a fill chunk through the pipeline once
+     * (no chunk position) and pre-allocate every chunk: writes and reads must
+     * still work, and EARLY's never-written units read as the fill value */
+    for (int early = 0; early < 2; early++) {
+        const hsize_t dims[3] = { NZ, NY, NX };
+        hid_t space = H5Screate_simple(3, dims, NULL), dcpl = H5Pcreate(H5P_DATASET_CREATE);
+        float fv = 3.25f, *rd = (float *)malloc(sizeof(float) * N);
+        char name[32];
+        snprintf(name, sizeof(name), "group_alloc_%s", early ? "early" : "late");
+        H5Pset_chunk(dcpl, 3, slab);
+        H5Pset_alloc_time(dcpl, early ? H5D_ALLOC_TIME_EARLY : H5D_ALLOC_TIME_LATE);
+        if (early) H5Pset_fill_value(dcpl, H5T_NATIVE_FLOAT, &fv);
+        else H5Pset_fill_time(dcpl, H5D_FILL_TIME_NEVER);
+        H5Pset_comp(dcpl, "noop", "{\"h5z:group\":\"2,1,1\"}");
+        hid_t d = H5Dcreate2(file, name, H5T_NATIVE_FLOAT, space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
+        int ok = d >= 0;
+        if (ok && early) {   /* nothing written yet */
+            ok = H5Dread(d, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, rd) >= 0;
+            for (size_t i = 0; ok && i < N; i++) if (rd[i] != fv) ok = 0;
+        }
+        ok = ok && H5Dwrite(d, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, w) >= 0 &&
+             H5Dread(d, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, rd) >= 0 &&
+             memcmp(w, rd, sizeof(float) * N) == 0;
+        if (ok) H5ZC_PASS("[group] alloc time %s: %swrite + read OK", early ? "EARLY" : "LATE",
+                          early ? "unwritten units read as the fill value, " : "");
+        else H5ZC_FAIL("[group] alloc time %s", early ? "EARLY" : "LATE");
+        if (d >= 0) H5Dclose(d);
+        H5Pclose(dcpl); H5Sclose(space); free(rd);
+    }
+
     /* bad specs fail at H5Dcreate */
     {
         h5zc_quiet(1);

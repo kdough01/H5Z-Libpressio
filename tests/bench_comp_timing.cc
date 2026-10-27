@@ -32,8 +32,42 @@
  *   bench_comp_timing [--only DS[,DS]] [--comp NAME] [--chunk-n N] [--reps R]
  *                     [--h5 FILE] [--out CSV] [--ext XCSV] [--include-pjson]
  *                     [--deflate [--level L]] [--list]
+ *                     [--arm hostsim|devres|rtrip] [--path chunk|direct]
+ *                     [--group SPEC] [--progressive PCTS --prog-csv FILE]
  *   env: BENCH_ONLY, BENCH_COMP, BENCH_DEBUG, BENCH_KEEP_H5, BENCH_CHUNKINFO,
- *        BENCH_FSYNC, BENCH_SYNC_DIR, BENCH_DROP_CACHE
+ *        BENCH_FSYNC, BENCH_SYNC_DIR, BENCH_DROP_CACHE, BENCH_ARM, BENCH_PATH,
+ *        BENCH_GROUP
+ *
+ * Matched to the VOL experiments (vol-external-passthrough/tests):
+ *
+ *   --arm      the three residency arms of device_resident.pbs, same meaning:
+ *                hostsim  host buffer, plain H5Dwrite (what every sweep measured)
+ *                devres   H5Dwrite gets a cudaMalloc'd pointer; the filter's
+ *                         dataset-level path compresses it in place
+ *                         (H5Pset_comp_native_buffer "cudamalloc"). The copy
+ *                         that fills the device buffer is outside every timer.
+ *                rtrip    same device buffer, but the application copies it D2H
+ *                         inside the write timer (d2h_ms) and hands HDF5 the
+ *                         host copy -- what a GPU simulation paid with the
+ *                         per-chunk filter.
+ *              As in the VOL harness, the read is host-resident in every arm.
+ *              devres/rtrip need a CUDA build (-DUSE_CUDA=ON); BENCH_DEVRES_HOST=1
+ *              runs devres with a host buffer in domain "malloc" (plumbing check).
+ *   --path     chunk  (default) per-chunk filter, as before
+ *              direct dataset-level path for host buffers (H5Pset_comp_direct),
+ *                     write and read
+ *   --group    "h5z:group" for every entry (e.g. all, 4,1,1): one compression
+ *              unit spans several storage chunks; --chunk-n sets the storage
+ *              chunks. With all, ratio should match the VOL's native N=1 row.
+ *   --progressive 5,10,25,50,75,100
+ *              after the normal write/read, re-read at each percentage (cold
+ *              cache, --reps times) and append VOL-format rows to --prog-csv
+ *              (columns of run_progressive.sh's progressive_<comp>.csv). Writes
+ *              with "h5z:progressive":true; use with --group (sperr only).
+ *
+ * The XCSV keeps the VOL's 24 columns in order and appends arm, path, group,
+ * units, chunks_io, bytes_io, bytes_staged (from H5Zcomp_get_io_stats; the
+ * last four describe the write, 0 on the per-chunk path).
  * ==========================================================================*/
 #include <hdf5.h>
 #include <cerrno>
@@ -52,6 +86,11 @@
 
 #include <libpressio/libpressio.h>
 #include "H5Zpressio.h"
+#include <vector>
+
+#ifdef BENCH_HAVE_CUDA
+#include <cuda_runtime.h>
+#endif
 
 #define BENCH_CONFIG_ENABLE_HDF5
 #include "bench_config.h"
@@ -123,13 +162,35 @@ static double bench_evict_path(const char *path) {
     return t.stop_ms();
 }
 
-/* Same 24 columns, same order, as bench_vol_timing.cc's XCSV_HEADER. */
+/* The 24 columns of bench_vol_timing.cc's XCSV_HEADER, same order, then the
+ * filter's mode and dataset-level-path statistics. */
 static const char *XCSV_HEADER =
     "dataset,compressor,codec_kind,chunk_n,rep,"
     "logical_bytes,stored_bytes,ratio,"
     "create_ms,write_ms,flush_ms,sync_ms,close_ms,csync_ms,"
     "evict_ms,open_ms,read_ms,"
-    "rmse,abs_thresh,maxae,bound_ok,write_wall_ms,d2h_ms,read_wall_ms\n";
+    "rmse,abs_thresh,maxae,bound_ok,write_wall_ms,d2h_ms,read_wall_ms,"
+    "arm,path,group,units,chunks_io,bytes_io,bytes_staged\n";
+
+/* Columns of run_progressive.sh's progressive_<comp>.csv, then chunks_read. */
+static const char *PROG_HEADER =
+    "pct,rep,logical_bytes,stored_bytes,bytes_read,cont_bytes,read_wall_ms,read_cpu_ms,"
+    "open_ms,evict_ms,rmse,maxae,ratio,dataset,compressor,chunk_n,group,chunks_read\n";
+
+/* Experiment mode, one per process. */
+enum bench_arm_t { ARM_HOSTSIM = 0, ARM_DEVRES, ARM_RTRIP };
+struct bench_mode {
+    bench_arm_t      arm   = ARM_HOSTSIM;
+    bool             direct = false;      /* --path direct            */
+    std::string      group;               /* --group SPEC ("" = none) */
+    std::vector<int> pcts;                /* --progressive            */
+    FILE            *prog = NULL;         /* --prog-csv               */
+    bool             devres_host = false; /* BENCH_DEVRES_HOST=1      */
+};
+static const char *arm_name(bench_arm_t a) {
+    return a == ARM_DEVRES ? "devres" : a == ARM_RTRIP ? "rtrip" : "hostsim";
+}
+static const char *g_mode_tail = ",hostsim,chunk,,0,0,0,0";   /* for failure rows */
 
 static void xcsv_failure_row(FILE *xcsv, const char *dataset, const char *comp,
                              const char *kind, int chunk_n, unsigned long long logical) {
@@ -137,9 +198,26 @@ static void xcsv_failure_row(FILE *xcsv, const char *dataset, const char *comp,
         "%s,%s,%s,%d,-1,%llu,0,0,"
         "-1,-1,-1,-1,-1,-1,"
         "-1,-1,-1,"
-        "-1,-1,-1,0,-1,-1,-1\n",
-        dataset, comp, kind, chunk_n, logical);
+        "-1,-1,-1,0,-1,-1,-1%s\n",
+        dataset, comp, kind, chunk_n, logical, g_mode_tail);
     std::fflush(xcsv);
+}
+
+static double bench_cpu_now_ms(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);
+    return (double)ts.tv_sec * 1.0e3 + (double)ts.tv_nsec * 1.0e-6;
+}
+
+/* Insert extra "key":value pairs into an options JSON object. */
+static std::string json_with(const char *base, const std::string &extra) {
+    std::string b = (base && *base) ? base : "{}";
+    if (extra.empty()) return b;
+    size_t close = b.rfind('}');
+    if (close == std::string::npos) return b;
+    size_t open = b.find('{');
+    bool empty = b.find_first_not_of(" \t\r\n", open + 1) == close;
+    return b.substr(0, close) + (empty ? "" : ",") + extra + b.substr(close);
 }
 
 typedef struct { double min, max, mean, rmse, maxae; } bench_stats;
@@ -214,7 +292,7 @@ static void chunk_layout(const bench_dataset_t *d, int chunk_n, hsize_t *chunk) 
 
 /* c == NULL => deflate baseline (different codec; overhead comparison only). */
 static hid_t make_dcpl(const bench_dataset_t *d, const bench_compressor_t *c,
-                       int chunk_n, int deflate_level) {
+                       int chunk_n, int deflate_level, const bench_mode &m) {
     hid_t dcpl = H5Pcreate(H5P_DATASET_CREATE);
     hsize_t chunk[BENCH_MAX_RANK];
     chunk_layout(d, chunk_n, chunk);
@@ -234,7 +312,12 @@ static hid_t make_dcpl(const bench_dataset_t *d, const bench_compressor_t *c,
      * ride along; LibPressio ignores keys it does not own. */
     char opts[2048];
     bench_compressor_opts_json(c, d, opts, sizeof(opts));
-    const char *oj = (std::strcmp(opts, "{}") == 0) ? NULL : opts;
+    /* Filter-mode keys ride in the same JSON (the filter strips "h5z:" keys). */
+    std::string extra;
+    if (!m.group.empty()) extra += "\"h5z:group\":\"" + m.group + "\"";
+    if (!m.pcts.empty())  extra += std::string(extra.empty() ? "" : ",") + "\"h5z:progressive\":true";
+    std::string full = json_with(opts, extra);
+    const char *oj = (full == "{}") ? NULL : full.c_str();
     if (std::getenv("BENCH_DEBUG"))
         std::fprintf(stderr, "[dbg dcpl] %s/%s id=%s chunk_n=%d opts=%s\n",
                      d->name, c->name, c->pressio_id, chunk_n, oj ? oj : "(default)");
@@ -248,7 +331,8 @@ static hid_t make_dcpl(const bench_dataset_t *d, const bench_compressor_t *c,
 }
 
 static int run_one(const bench_dataset_t *din, const bench_compressor_t *c, const char *h5path,
-                   int chunk_n, int rep, int deflate_level, FILE *csv, FILE *xcsv) {
+                   int chunk_n, int rep, int deflate_level, FILE *csv, FILE *xcsv,
+                   const bench_mode &m) {
     const char *cname = c ? c->name : "deflate";
     const char *kind  = c ? bench_codec_kind_name(c->kind) : "cpu";
 
@@ -291,9 +375,44 @@ static int run_one(const bench_dataset_t *din, const bench_compressor_t *c, cons
 
     double create_ms = 0, write_ms = 0, flush_ms = 0, sync_ms = 0;
     double close_ms = 0, csync_ms = 0, evict_ms = 0, open_ms = 0, read_ms = 0;
-    double write_wall_ms = 0, read_wall_ms = 0;
+    double write_wall_ms = 0, read_wall_ms = 0, d2h_ms = 0;
     unsigned long long stored = 0, filesize = 0;
     int rc = 0;
+    H5Z_comp_io_stats_t wst; std::memset(&wst, 0, sizeof(wst));
+    void *dbuf = NULL;       /* the "simulation's" device buffer (devres/rtrip) */
+    void *stage = NULL;      /* rtrip: host copy made inside the write timer    */
+    const void *src = hbuf;  /* what H5Dwrite is handed                         */
+    hid_t wdxpl = H5Pcreate(H5P_DATASET_XFER), rdxpl = H5Pcreate(H5P_DATASET_XFER);
+    if (m.direct) { H5Pset_comp_direct(wdxpl, 1); H5Pset_comp_direct(rdxpl, 1); }
+
+    /* Residency staging, outside every timer (a real GPU simulation would
+     * already have produced these bytes on the device). */
+    if (m.arm != ARM_HOSTSIM) {
+#ifdef BENCH_HAVE_CUDA
+        if (!m.devres_host) {
+            if (cudaMalloc(&dbuf, raw) != cudaSuccess ||
+                cudaMemcpy(dbuf, hbuf, raw, cudaMemcpyHostToDevice) != cudaSuccess) {
+                std::fprintf(stderr, "[ERR] cudaMalloc/upload %.1f MiB failed for %s: %s\n",
+                             raw / 1048576.0, din->name, cudaGetErrorString(cudaGetLastError()));
+                if (dbuf) cudaFree(dbuf);
+                dbuf = NULL; rc = -1; goto cleanup;
+            }
+            cudaDeviceSynchronize();
+        }
+#endif
+        if (m.devres_host) {
+            dbuf = std::malloc(raw);
+            if (dbuf) std::memcpy(dbuf, hbuf, raw);
+        }
+        if (!dbuf) { std::fprintf(stderr, "[ERR] arm %s: no device buffer\n", arm_name(m.arm)); rc = -1; goto cleanup; }
+        if (m.arm == ARM_DEVRES) {
+            H5Pset_comp_native_buffer(wdxpl, m.devres_host ? "malloc" : "cudamalloc");
+            src = dbuf;
+        } else {
+            stage = std::malloc(raw);
+            if (!stage) { rc = -1; goto cleanup; }
+        }
+    }
 
     /* ---------------- WRITE ---------------- */
     {
@@ -303,7 +422,7 @@ static int run_one(const bench_dataset_t *din, const bench_compressor_t *c, cons
         if (file < 0) { std::fprintf(stderr, "[ERR] H5Fcreate %s\n", h5path); rc = -1; goto cleanup; }
 
         hid_t space = H5Screate_simple(d.rank, dims, NULL);
-        hid_t dcpl  = make_dcpl(&d, c, chunk_n, deflate_level);
+        hid_t dcpl  = make_dcpl(&d, c, chunk_n, deflate_level, m);
         if (dcpl < 0) { H5Sclose(space); H5Fclose(file); rc = -1; goto cleanup; }
         hid_t dset  = H5Dcreate2(file, d.name, ftype, space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
         if (dset < 0) {
@@ -314,9 +433,22 @@ static int run_one(const bench_dataset_t *din, const bench_compressor_t *c, cons
 
         BenchCpuTimer wt; wt.start();
         BenchWallTimer ww; ww.start();
-        herr_t wret = H5Dwrite(dset, ntype, H5S_ALL, H5S_ALL, H5P_DEFAULT, hbuf);
+        if (m.arm == ARM_RTRIP) {
+            /* The application brings its device data to the host itself,
+             * inside the timer -- the cost devres avoids. */
+            BenchWallTimer dt; dt.start();
+#ifdef BENCH_HAVE_CUDA
+            if (!m.devres_host) { cudaMemcpy(stage, dbuf, raw, cudaMemcpyDeviceToHost); cudaDeviceSynchronize(); }
+            else
+#endif
+            std::memcpy(stage, dbuf, raw);
+            d2h_ms = dt.stop_ms();
+            src = stage;
+        }
+        herr_t wret = H5Dwrite(dset, ntype, H5S_ALL, H5S_ALL, wdxpl, src);
         write_wall_ms = ww.stop_ms();
         write_ms = wt.stop_ms();
+        H5Zcomp_get_io_stats(&wst);
 
         BenchWallTimer ft; ft.start();
         (void)H5Fflush(file, H5F_SCOPE_LOCAL);
@@ -350,7 +482,7 @@ static int run_one(const bench_dataset_t *din, const bench_compressor_t *c, cons
 
         BenchCpuTimer rt; rt.start();
         BenchWallTimer rw; rw.start();
-        herr_t rret = H5Dread(dset, ntype, H5S_ALL, H5S_ALL, H5P_DEFAULT, rbuf);
+        herr_t rret = H5Dread(dset, ntype, H5S_ALL, H5S_ALL, rdxpl, rbuf);
         read_wall_ms = rw.stop_ms();
         read_ms = rt.stop_ms();
 
@@ -383,13 +515,20 @@ static int run_one(const bench_dataset_t *din, const bench_compressor_t *c, cons
             "%s,%s,%s,%d,%d,%llu,%llu,%.4f,"
             "%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,"
             "%.4f,%.4f,%.4f,"
-            "%.6e,%.6e,%.6e,%d,%.4f,%.4f,%.4f\n",
+            "%.6e,%.6e,%.6e,%d,%.4f,%.4f,%.4f,"
+            "%s,%s,%s,%llu,%llu,%llu,%llu\n",
             d.name, cname, kind, chunk_n, rep,
             (unsigned long long)raw, stored, ratio,
             create_ms, write_ms, flush_ms, sync_ms, close_ms, csync_ms,
             evict_ms, open_ms, read_ms,
-            st.rmse, thr, st.maxae, bound_ok, write_wall_ms, 0.0, read_wall_ms);
+            st.rmse, thr, st.maxae, bound_ok, write_wall_ms, d2h_ms, read_wall_ms,
+            arm_name(m.arm), m.direct ? "direct" : "chunk", m.group.c_str(),
+            wst.handled ? wst.units : 0ULL, wst.handled ? wst.chunks : 0ULL,
+            wst.handled ? wst.bytes_io : 0ULL, wst.handled ? wst.bytes_staged : 0ULL);
         std::fflush(xcsv);
+        if (m.arm == ARM_DEVRES && !(wst.handled && wst.native))
+            std::fprintf(stderr, "[FAIL] %s/%s arm=devres but the write did not take the native-buffer "
+                         "path (handled=%d native=%d)\n", d.name, cname, wst.handled, wst.native);
 
         std::printf("  %-14s %-16s N=%-5d r=%d C=%6.2f W=%9.2f F=%8.2f S=%8.2f "
                     "X=%7.2f S2=%7.2f | E=%6.2f O=%6.2f R=%9.2f ms  "
@@ -401,11 +540,59 @@ static int run_one(const bench_dataset_t *din, const bench_compressor_t *c, cons
         std::fflush(stdout);
     }
 
+    /* ---------------- PROGRESSIVE RE-READS ---------------- */
+    if (!m.pcts.empty() && m.prog) {
+        size_t nelem = bench_num_elements(&d);
+        for (int pct : m.pcts) {
+            if (do_evict) evict_ms = bench_evict_path(h5path);
+            BenchWallTimer ot; ot.start();
+            hid_t file = H5Fopen(h5path, H5F_ACC_RDONLY, H5P_DEFAULT);
+            open_ms = ot.stop_ms();
+            hid_t dset = file >= 0 ? H5Dopen2(file, d.name, H5P_DEFAULT) : H5I_INVALID_HID;
+            hid_t pdx  = H5Pcopy(rdxpl);
+            H5Pset_comp_progressive(pdx, (unsigned)pct);
+            std::memset(rbuf, 0, raw);
+            double c0 = bench_cpu_now_ms();
+            BenchWallTimer rw; rw.start();
+            herr_t r = dset >= 0 ? H5Dread(dset, ntype, H5S_ALL, H5S_ALL, pdx, rbuf) : -1;
+            double wall = rw.stop_ms(), cpu = bench_cpu_now_ms() - c0;
+            H5Z_comp_io_stats_t ps; H5Zcomp_get_io_stats(&ps);
+            H5Pclose(pdx);
+            if (dset >= 0) H5Dclose(dset);
+            if (file >= 0) H5Fclose(file);
+            if (r < 0 || !ps.handled) {
+                std::fprintf(stderr, "[ERR] progressive read %s/%s at %d%% failed (handled=%d)\n",
+                             d.name, cname, pct, ps.handled);
+                rc = -1;
+                break;
+            }
+            bench_stats st = compute_stats(hbuf, rbuf, nelem, d.dtype);
+            std::fprintf(m.prog, "%d,%d,%llu,%llu,%llu,%llu,%.4f,%.4f,%.4f,%.4f,%.6e,%.6e,%.4f,%s,%s,%d,%s,%llu\n",
+                         pct, rep, (unsigned long long)raw, stored, ps.bytes_io, stored, wall, cpu,
+                         open_ms, evict_ms, st.rmse, st.maxae, stored ? (double)raw / (double)stored : 0.0,
+                         d.name, cname, chunk_n, m.group.c_str(), ps.chunks);
+            std::fflush(m.prog);
+            std::printf("  progressive %-12s %-14s %3d%%  chunks=%llu  bytes=%llu/%llu  R=%9.2f ms  "
+                        "RMSE=%.3e maxae=%.3e\n", d.name, cname, pct, ps.chunks, ps.bytes_io, stored,
+                        wall, st.rmse, st.maxae);
+            std::fflush(stdout);
+        }
+    }
+
 cleanup:
     if (rc != 0) {
         xcsv_failure_row(xcsv, d.name, cname, kind, chunk_n, (unsigned long long)raw);
         std::fprintf(stderr, "[RECORDED FAILURE] %s/%s N=%d\n", d.name, cname, chunk_n);
     }
+    H5Pclose(wdxpl);
+    H5Pclose(rdxpl);
+    if (dbuf) {
+#ifdef BENCH_HAVE_CUDA
+        if (!m.devres_host) cudaFree(dbuf); else
+#endif
+        std::free(dbuf);
+    }
+    std::free(stage);
     std::free(rbuf);
     std::free(hbuf);
     return rc;
@@ -435,6 +622,11 @@ int main(int argc, char **argv) {
     const char *only_ds  = std::getenv("BENCH_ONLY");
     int chunk_override = 0, deflate = 0, deflate_level = 6, reps = 1, include_pjson = 0, list = 0;
     int nfail = 0, nskip = 0, nrun = 0;
+    bench_mode mode;
+    const char *arm_s   = std::getenv("BENCH_ARM");
+    const char *path_s  = std::getenv("BENCH_PATH");
+    const char *group_s = std::getenv("BENCH_GROUP");
+    const char *pcts_s  = NULL, *progpath = NULL;
 
     for (int i = 1; i < argc; ++i) {
         if      (!std::strcmp(argv[i], "--deflate"))       deflate = 1;
@@ -448,9 +640,56 @@ int main(int argc, char **argv) {
         else if (!std::strcmp(argv[i], "--chunk-n") && i + 1 < argc) chunk_override = std::atoi(argv[++i]);
         else if (!std::strcmp(argv[i], "--reps")    && i + 1 < argc) reps = std::atoi(argv[++i]);
         else if (!std::strcmp(argv[i], "--level")   && i + 1 < argc) deflate_level = std::atoi(argv[++i]);
+        else if (!std::strcmp(argv[i], "--arm")     && i + 1 < argc) arm_s    = argv[++i];
+        else if (!std::strcmp(argv[i], "--path")    && i + 1 < argc) path_s   = argv[++i];
+        else if (!std::strcmp(argv[i], "--group")   && i + 1 < argc) group_s  = argv[++i];
+        else if (!std::strcmp(argv[i], "--progressive") && i + 1 < argc) pcts_s = argv[++i];
+        else if (!std::strcmp(argv[i], "--prog-csv")    && i + 1 < argc) progpath = argv[++i];
         else { std::fprintf(stderr, "unknown argument '%s' (see header of bench_comp_timing.cc)\n", argv[i]); return 2; }
     }
     if (reps < 1) reps = 1;
+
+    /* ---- experiment mode ---- */
+    if (arm_s && *arm_s) {
+        if      (!std::strcmp(arm_s, "devres"))  mode.arm = ARM_DEVRES;
+        else if (!std::strcmp(arm_s, "rtrip"))   mode.arm = ARM_RTRIP;
+        else if (!std::strcmp(arm_s, "hostsim")) mode.arm = ARM_HOSTSIM;
+        else { std::fprintf(stderr, "unknown arm '%s' (hostsim|devres|rtrip)\n", arm_s); return 2; }
+    }
+    if (path_s && *path_s) {
+        if      (!std::strcmp(path_s, "direct")) mode.direct = true;
+        else if (std::strcmp(path_s, "chunk"))  { std::fprintf(stderr, "unknown path '%s' (chunk|direct)\n", path_s); return 2; }
+    }
+    if (group_s && *group_s) mode.group = group_s;
+    if (pcts_s && *pcts_s) {
+        for (const char *q = pcts_s; *q;) {
+            int v = std::atoi(q);
+            if (v < 1 || v > 100) { std::fprintf(stderr, "bad --progressive list '%s'\n", pcts_s); return 2; }
+            mode.pcts.push_back(v);
+            q = std::strchr(q, ',');
+            if (!q) break;
+            ++q;
+        }
+    }
+    mode.devres_host = bench_env_int("BENCH_DEVRES_HOST", 0) != 0;
+    const bool needs_dset_io = mode.arm == ARM_DEVRES || mode.direct || !mode.group.empty() || !mode.pcts.empty();
+    if (needs_dset_io && !H5Zcomp_has_dset_io()) {
+        std::fprintf(stderr, "FATAL: --arm devres / --path direct / --group / --progressive need H5Zcomp "
+                             "built against an HDF5 with dataset-level filter callbacks\n");
+        return 77;
+    }
+#ifndef BENCH_HAVE_CUDA
+    if (mode.arm != ARM_HOSTSIM && !mode.devres_host) {
+        std::fprintf(stderr, "FATAL: --arm %s needs a CUDA build of bench_comp_timing (-DUSE_CUDA=ON), "
+                             "or BENCH_DEVRES_HOST=1 for the host stand-in\n", arm_name(mode.arm));
+        return 77;
+    }
+#endif
+    if (!mode.pcts.empty() && !progpath) { std::fprintf(stderr, "--progressive needs --prog-csv FILE\n"); return 2; }
+    static char tail[256];
+    std::snprintf(tail, sizeof(tail), ",%s,%s,%s,0,0,0,0", arm_name(mode.arm),
+                  mode.direct ? "direct" : "chunk", mode.group.c_str());
+    g_mode_tail = tail;
 
     if (H5Z_register_comp() < 0 || H5Zfilter_avail(H5Z_FILTER_COMP) <= 0) {
         std::fprintf(stderr, "FATAL: H5Zcomp filter %d not available\n", H5Z_FILTER_COMP);
@@ -473,6 +712,10 @@ int main(int argc, char **argv) {
     char xdefault[512];
     if (!xcsvpath) { std::snprintf(xdefault, sizeof(xdefault), "%s.ext.csv", csvpath); xcsvpath = xdefault; }
 
+    std::fprintf(stderr, "[h5zcomp] mode: arm=%s%s path=%s group=%s progressive=%s\n",
+                 arm_name(mode.arm), mode.devres_host ? " (host stand-in)" : "",
+                 mode.direct ? "direct" : "chunk", mode.group.empty() ? "-" : mode.group.c_str(),
+                 pcts_s ? pcts_s : "-");
     std::fprintf(stderr, "[h5zcomp] backend=%s filter_id=%d chunk_n=%s reps=%d\n",
                  deflate ? "deflate(baseline)" : "H5Zcomp", H5Z_FILTER_COMP,
                  chunk_override ? std::to_string(chunk_override).c_str() : "per-entry (vol:chunk_n, default 1)",
@@ -493,6 +736,12 @@ int main(int argc, char **argv) {
     FILE *xcsv = std::fopen(xcsvpath, "w");
     if (!xcsv) { std::perror("xcsv"); std::fclose(csv); return 1; }
     std::fputs(XCSV_HEADER, xcsv);
+    if (progpath) {
+        bool fresh = access(progpath, F_OK) != 0;
+        mode.prog = std::fopen(progpath, "a");
+        if (!mode.prog) { std::perror("prog-csv"); return 1; }
+        if (fresh) std::fputs(PROG_HEADER, mode.prog);
+    }
 
     const size_t mem_avail = bench_mem_available_bytes();
 
@@ -516,7 +765,7 @@ int main(int argc, char **argv) {
             int n = chunk_override > 0 ? chunk_override : 1;
             for (int r = 0; r < reps; ++r) {
                 nrun++;
-                if (run_one(d, NULL, h5path, n, r, deflate_level, csv, xcsv) != 0) nfail++;
+                if (run_one(d, NULL, h5path, n, r, deflate_level, csv, xcsv, mode) != 0) nfail++;
             }
         } else {
             for (int ci = 0; ci < BENCH_NUM_COMPRESSORS; ++ci) {
@@ -532,7 +781,7 @@ int main(int argc, char **argv) {
                 int n = chunk_override > 0 ? chunk_override : bench_effective_chunk_n(c);
                 for (int r = 0; r < reps; ++r) {
                     nrun++;
-                    if (run_one(d, c, h5path, n, r, deflate_level, csv, xcsv) != 0) nfail++;
+                    if (run_one(d, c, h5path, n, r, deflate_level, csv, xcsv, mode) != 0) nfail++;
                 }
             }
         }
@@ -541,6 +790,7 @@ int main(int argc, char **argv) {
 
     std::fclose(csv);
     std::fclose(xcsv);
+    if (mode.prog) std::fclose(mode.prog);
     std::fprintf(stderr, "wrote %s and %s (%d run, %d failed configuration(s) recorded, %d codec skip(s))\n",
                  csvpath, xcsvpath, nrun, nfail, nskip);
     if (nrun == 0) return 77;   /* nothing reachable: ctest reports SKIPPED */

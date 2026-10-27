@@ -126,6 +126,45 @@ ex_progressive sperr pwe=1e-4, 128^3 f32, 32 storage chunks, 1 unit
   ROI (4 units x 8 chunks): 11/32 chunks, 34.4% of bytes; bound met in the ROI unit
 ```
 
+## Comparing against the VOL experiments
+
+`jobs/vol_compare.pbs` reruns the VOL's experiments through the filter, and `scripts/plot_vol_vs_filter.py` puts the two side by side. Each phase mirrors one job in `vol-external-passthrough/tests`:
+
+| phase | VOL job (run used) | filter side |
+|---|---|---|
+| `matrix` | `bench_vol_timing.pbs` (52888): 6 datasets × 15 codecs, native and `vol_N8`/`vol_N16` | same matrix at N = 1, 8, 16, per-chunk path and dataset-level path (`--path direct`) |
+| `decouple` | the same run's native vs `vol_N` rows | N = 1..32 storage chunks: one unit per chunk vs one unit over all of them (`--group all`) |
+| `residency` | `device_resident.pbs` (`device_resident_tests`): GPU codecs × arms `devres`/`rtrip`/`hostsim` | the same three arms (`--arm`); `devres` hands `H5Dwrite` a `cudaMalloc` pointer through `H5Pset_comp_native_buffer` |
+| `progressive` | `run_progressive.sh` (53500 scale-T, 53492/53488 s3d) | the same datasets, codecs, percentages and reps (`--progressive`), one unit striped over 98 / 100 chunks |
+
+```bash
+export HDF5_BLOB=$HOME/sw/hdf5-blob-dset-io; source scripts/env.sh   # + the SPERR exports
+qsub -V jobs/vol_compare.pbs                                  # all four phases (12 h)
+qsub -V -v PHASES=residency jobs/vol_compare.pbs              # or one at a time
+```
+
+Results land in `results/vs_vol_<jobid>/`. The job ends by running the plot script against the VOL result folders, which default to `$HOME/hdf5_projs/vol-external-passthrough/tests/results/...`; override them with `VOL_RESULTS`, `VOL_MATRIX`, `VOL_DEVRES` and `VOL_PROG`. The figures and a `summary.md` of the numbers behind them go to `results/vs_vol_<jobid>/plots/`:
+
+- `1_ratio_parity`: filter ratio vs VOL ratio at N=1.
+- `2_matrix_time`: filter ÷ VOL end-to-end write and read time, per codec, both paths.
+- `3_decouple_<codec>`: ratio and write time vs storage-chunk count.
+- `4_residency_<codec>`: write time in the three arms.
+- `5_progressive`: bytes read, read time and RMSE vs requested percentage.
+
+Times are wall clock. Write is end to end (create through the final fsync), so codec work done at `H5Fclose` is counted; read is open plus read on a cold cache. Make sure `BENCH_FSYNC`, `BENCH_DROP_CACHE` and `BENCH_SYNC_DIR` match the VOL runs (all on by default).
+
+`results/vs_vol_baseline_sep2026/plots/` is the same script run on what existed before this job: the VOL runs above plus the September per-chunk sweep (`results/final`). Every series that needs the dataset-level path is marked "not run" there.
+
+The script also works by hand, with any subset of inputs:
+
+```bash
+python3 scripts/plot_vol_vs_filter.py --vol-matrix <vol>/tests/results/20260811_140354_52888 \
+    --vol-devres <vol>/tests/results/device_resident_tests --vol-prog <vol>/tests/results/prog_20260818_140442_53500 \
+    --filter results/vs_vol_<jobid> --filter-baseline results/final --out plots/
+```
+
+`bench_comp_timing` flags behind the job: `--arm hostsim|devres|rtrip`, `--path chunk|direct`, `--group SPEC`, `--progressive 5,10,... --prog-csv FILE`. The ext CSV keeps the VOL's 24 columns and appends `arm,path,group,units,chunks_io,bytes_io,bytes_staged`. `devres`/`rtrip` need `-DUSE_CUDA=ON`; `BENCH_DEVRES_HOST=1` runs `devres` on a host buffer to check the plumbing.
+
 ## Benchmarks
 
 ```bash
