@@ -336,6 +336,37 @@ static int run_one(const bench_dataset_t *din, const bench_compressor_t *c, cons
     const char *cname = c ? c->name : "deflate";
     const char *kind  = c ? bench_codec_kind_name(c->kind) : "cpu";
 
+    /* A per-chunk dataset whose single chunk is >= 4 GiB cannot be written by
+     * any filter (einspline37 at N=1). Record it BEFORE loading the field, which
+     * for einspline37 is a 12.6 GiB read per codec. (HDF5-sourced datasets have
+     * no dims until loaded; none of them is that large.) */
+    if (m.group.empty() && din->src != BENCH_SRC_HDF5 && din->rank > 0) {
+        hsize_t dims0[BENCH_MAX_RANK], ch[BENCH_MAX_RANK];
+        bench_dataset_h5dims(din, dims0);
+        for (int i = 0; i < din->rank; ++i) ch[i] = dims0[i];
+        if (chunk_n > 1) {
+            hsize_t remaining = (hsize_t)chunk_n;
+            for (int i = 0; i < din->rank && remaining > 1; ++i) {
+                hsize_t split = (dims0[i] < remaining) ? dims0[i] : remaining;
+                if (split < 1) split = 1;
+                ch[i] = (dims0[i] + split - 1) / split;
+                if (ch[i] < 1) ch[i] = 1;
+                remaining = (remaining + split - 1) / split;
+            }
+        }
+        unsigned long long cbytes = bench_dtype_size(din->dtype);
+        for (int i = 0; i < din->rank; ++i) cbytes *= (unsigned long long)ch[i];
+        if (cbytes >= (1ULL << 32)) {
+            unsigned long long logical = bench_dtype_size(din->dtype);
+            for (int i = 0; i < din->rank; ++i) logical *= (unsigned long long)dims0[i];
+            std::fprintf(stderr, "[skip] %s/%s N=%d: one chunk would be %.2f GiB (HDF5 limit 4 GiB) -- "
+                         "recorded as rep=-1 without loading the data (use --group all to store it)\n",
+                         din->name, cname, chunk_n, cbytes / 1073741824.0);
+            xcsv_failure_row(xcsv, din->name, cname, kind, chunk_n, logical);
+            return -1;
+        }
+    }
+
     bench_dataset_t d;
     size_t raw = 0;
     void *hbuf = bench_load_field(din, &d, &raw);   /* resolves HDF5-sourced dims */

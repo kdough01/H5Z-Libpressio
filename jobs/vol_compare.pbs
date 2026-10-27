@@ -22,8 +22,14 @@
 #                cache, 3 reps, on the VOL's datasets (scale-T pwe1e3, s3d
 #                pwe1e3 and pwe1e6), one unit striped over many small chunks.
 #
-#   qsub -V jobs/vol_compare.pbs                          # all phases
+#   qsub -V jobs/vol_compare.pbs                          # all phases (long: see below)
 #   qsub -V -v PHASES=residency jobs/vol_compare.pbs      # one phase
+#   qsub -V -v PHASES=matrix,BENCH_ONLY=miranda,s3d jobs/vol_compare.pbs
+#
+# Time: the matrix is 2 paths x 3 N x 15 codecs per dataset, and einspline37
+# alone moves 12.6 GiB per run. Submit the matrix per dataset (BENCH_ONLY) or
+# per phase rather than everything in one 12 h job; each dataset is its own
+# process with its own timeout (RUN_TIMEOUT, default 10800 s).
 #   qsub -V -v PHASES="decouple progressive",BENCH_REPS=3 jobs/vol_compare.pbs
 #
 # Run with -V from a shell where `source scripts/env.sh` works and HDF5_BLOB
@@ -76,17 +82,29 @@ printf 'dataset,chunk_n,nchunks_actual,chunk_elems,chunk_bytes\n' > "$BENCH_CHUN
 REPS="${BENCH_REPS:-1}"
 DATASETS="${BENCH_ONLY:-miranda,ocean_temp,einspline37,scale-T,s3d,nyx_baryon}"
 
-# run LABEL ARGS...  -> results_ext_LABEL.csv (+ results_h5zcomp_LABEL.csv, stdout log)
+# run LABEL ARGS...  -> results_ext_LABEL_<dataset>.csv (+ results_h5zcomp_*, stdout_*)
+#   One bench_comp_timing process PER DATASET, each with its own timeout
+#   (RUN_TIMEOUT seconds, default 3 h), so a slow dataset (einspline37 is
+#   12.6 GiB per codec) cannot take the rest of a phase down with it.
+#   Progress goes to this log line-by-line; the full output is in stdout_*.txt.
 run () {
     local label="$1"; shift
-    local h5="$H5Z_SCRATCH/${TAG}_${label}.h5"
-    echo; echo "=== $label : $* ==="
-    timeout --signal=KILL "${RUN_TIMEOUT:-3600}" "$BIN" --h5 "$h5" --reps "$REPS" \
-        --out "$RESULTS/results_h5zcomp_${label}.csv" --ext "$RESULTS/results_ext_${label}.csv" "$@" \
-        2>&1 | tee -a "$RESULTS/stdout_${label}.txt" | grep -E "^  |FAIL|ERR|skip|SKIP"
-    local rc=${PIPESTATUS[0]}
-    [ $rc -eq 137 ] && echo "  [FAIL] $label killed by timeout (${RUN_TIMEOUT:-3600}s)"
-    rm -f "$h5"
+    local only="" args=()
+    while [ $# -gt 0 ]; do
+        if [ "$1" = "--only" ]; then only="$2"; shift 2; else args+=("$1"); shift; fi
+    done
+    local ds
+    for ds in $(echo "${only:-$DATASETS}" | tr ',' ' '); do
+        local tag="${label}_${ds}"
+        local h5="$H5Z_SCRATCH/${TAG}_${tag}.h5"
+        echo; echo "=== $(date +%H:%M:%S) $tag : ${args[*]} ==="
+        timeout --signal=KILL "${RUN_TIMEOUT:-10800}" "$BIN" --h5 "$h5" --reps "$REPS" --only "$ds" \
+            --out "$RESULTS/results_h5zcomp_${tag}.csv" --ext "$RESULTS/results_ext_${tag}.csv" "${args[@]}" \
+            2>&1 | tee -a "$RESULTS/stdout_${tag}.txt" | grep --line-buffered -E "^  |FAIL|ERR|skip|SKIP"
+        local rc=${PIPESTATUS[0]}
+        [ $rc -eq 137 ] && echo "  [FAIL] $tag killed by timeout (${RUN_TIMEOUT:-10800}s) -- rows written so far are kept"
+        rm -f "$h5"
+    done
     return 0
 }
 
