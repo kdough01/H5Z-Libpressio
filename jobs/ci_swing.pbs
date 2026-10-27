@@ -4,7 +4,7 @@
 #PBS -l walltime=01:30:00
 #PBS -j oe
 #PBS -A SDR
-#PBS -q gpu
+#PBS -q backfill
 #
 # Build H5Zcomp against the blob HDF5 and run the whole ctest suite:
 #   -L ci    data-free correctness (round-trips, chunk layouts, errors,
