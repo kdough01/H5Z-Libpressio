@@ -27,8 +27,9 @@
  * host program reads it with a normal H5Dread (shown at the end), and so do
  * h5dump / h5py with the plugin on HDF5_PLUGIN_PATH.
  *
- * Without CUDA this program runs the identical code path with a host buffer
- * declared as domain "malloc", so the plumbing can be checked anywhere; the
+ * With domain "malloc" (the default when built without CUDA, and what the
+ * ci.ex_native_buffer test uses) this program runs the identical code path
+ * with a host buffer, so the plumbing can be checked on any node; the
  * statistics printed below ("in place", "staged 0 B") are what to look at.
  *
  * Requirements of the native path (the filter reports each one if violated):
@@ -60,43 +61,61 @@
 #define FILENAME "ex_native_gpu.h5"
 #define NBYTES   (sizeof(float) * NZ * NY * NX)
 
-/* "Device" allocation helpers: CUDA when available, plain host memory otherwise. */
+/* "Device" allocation helpers. The buffer lives in CUDA device memory when the
+ * requested domain is "cudamalloc" (CUDA builds only); any other domain --
+ * "malloc", the host stand-in -- gets plain host memory, so the same binary
+ * also runs on a node without a GPU. */
+static int g_on_device = 0;
+
 static void *
 dev_alloc(size_t n)
 {
 #ifdef EX_HAVE_CUDA
-    void *p = NULL;
-    return cudaMalloc(&p, n) == cudaSuccess ? p : NULL;
-#else
-    return malloc(n);
+    if (g_on_device) {
+        void       *p  = NULL;
+        cudaError_t rc = cudaMalloc(&p, n);
+        if (rc != cudaSuccess) {
+            fprintf(stderr, "cudaMalloc(%zu) failed: %s (no GPU on this node? run it on a compute node, "
+                            "or pass domain 'malloc')\n", n, cudaGetErrorString(rc));
+            return NULL;
+        }
+        return p;
+    }
 #endif
+    return malloc(n);
 }
 static void
 dev_free(void *p)
 {
 #ifdef EX_HAVE_CUDA
-    cudaFree(p);
-#else
-    free(p);
+    if (g_on_device) {
+        cudaFree(p);
+        return;
+    }
 #endif
+    free(p);
 }
 static void
 dev_upload(void *dev, const void *host, size_t n)
 {
 #ifdef EX_HAVE_CUDA
-    cudaMemcpy(dev, host, n, cudaMemcpyHostToDevice);
-#else
-    memcpy(dev, host, n);
+    if (g_on_device) {
+        cudaMemcpy(dev, host, n, cudaMemcpyHostToDevice);
+        return;
+    }
 #endif
+    memcpy(dev, host, n);
 }
 static void
 dev_download(void *host, const void *dev, size_t n)
 {
 #ifdef EX_HAVE_CUDA
-    cudaMemcpy(host, dev, n, cudaMemcpyDeviceToHost);
-#else
-    memcpy(host, dev, n);
+    if (g_on_device) {
+        cudaMemcpy(host, dev, n, cudaMemcpyDeviceToHost);
+        return;
+    }
 #endif
+    memcpy(host, dev, n);
 }
 
 static double
@@ -149,6 +168,13 @@ main(int argc, char **argv)
     }
 
     /* The application's data lives on the device. */
+    g_on_device = (strcmp(domain, "cudamalloc") == 0);
+#ifndef EX_HAVE_CUDA
+    if (g_on_device) {
+        printf("SKIP: domain 'cudamalloc' needs a CUDA build of this example (-DUSE_CUDA=ON)\n");
+        return 77;
+    }
+#endif
     dev_w = dev_alloc(NBYTES);
     dev_r = dev_alloc(NBYTES);
     if (!dev_w || !dev_r) {
@@ -157,12 +183,7 @@ main(int argc, char **argv)
     }
     dev_upload(dev_w, host, NBYTES);
     printf("codec '%s' %s, buffer domain '%s'%s\n", codec, json, domain,
-#ifdef EX_HAVE_CUDA
-           " (CUDA device memory)"
-#else
-           " (host stand-in: built without CUDA)"
-#endif
-    );
+           g_on_device ? " (CUDA device memory)" : " (host memory standing in for a device)");
 
     hid_t file  = H5Fcreate(FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     hid_t space = H5Screate_simple(3, dims, NULL);
