@@ -1,7 +1,0 @@
-H5Z-Libpressio fc7f4e40ad72921ed8db7c68ae4bf51d8da8640f Filter: separate decompressor; bench: BENCH_ALLOC, job defaults to incr
-9ba86db759d326f3e741e83915cb5d58d7293a03 Add dataset-level transfer callbacks to H5Z_class3_t (dset_write/dset_read)
-host gpu3  phases: matrix
-NVIDIA A100-SXM4-40GB, 580.95.05
-BENCH_ONLY=miranda,s3d
-BENCH_DATA_ROOT=/lcrc/project/ECP-EZ/public/compression
-BENCH_ALLOC=incr

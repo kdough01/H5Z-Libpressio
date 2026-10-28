@@ -1,4 +1,0 @@
-dataset,compressor,codec_kind,chunk_n,rep,logical_bytes,stored_bytes,ratio,create_ms,write_ms,flush_ms,sync_ms,close_ms,csync_ms,evict_ms,open_ms,read_ms,rmse,abs_thresh,maxae,bound_ok,write_wall_ms,d2h_ms,read_wall_ms,arm,path,group,units,chunks_io,bytes_io,bytes_staged
-s3d,sperr_pwe1e3,cpu,100,0,1000000000,82568,12111.2295,2.0867,7333.1601,0.3597,45.4096,0.3323,20.3116,4.2872,0.4538,4487.7384,2.035617e-05,0.000000e+00,7.134692e-04,1,7333.1592,0.0000,4487.7376,hostsim,chunk,all,1,100,82568,0
-s3d,sperr_pwe1e3,cpu,100,1,1000000000,82568,12111.2295,5.0006,6822.3198,0.0918,50.1074,0.2952,18.9719,1.7292,0.4179,4123.8994,2.035617e-05,0.000000e+00,7.134692e-04,1,6822.3189,0.0000,4123.8986,hostsim,chunk,all,1,100,82568,0
-s3d,sperr_pwe1e3,cpu,100,2,1000000000,82568,12111.2295,4.7832,6701.2644,0.0808,54.7154,0.2963,24.2712,1.7408,0.4403,3903.6737,2.035617e-05,0.000000e+00,7.134692e-04,1,6701.2636,0.0000,3903.6728,hostsim,chunk,all,1,100,82568,0

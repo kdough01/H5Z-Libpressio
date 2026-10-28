@@ -1,4 +1,0 @@
-[h5zcomp] mode: arm=hostsim path=chunk group=- progressive=-
-[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=16 reps=1
-[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
-wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60218/results_h5zcomp_matrix_chunk_N16_nyx.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60218/results_ext_matrix_chunk_N16_nyx.csv (0 run, 0 failed configuration(s) recorded, 0 codec skip(s))
