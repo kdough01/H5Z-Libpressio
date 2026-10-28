@@ -1,0 +1,36 @@
+[h5zcomp] mode: arm=hostsim path=chunk group=- progressive=-
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=8 reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     noop             N=8     r=0 C=  0.68 W=   317.02 F=    0.11 S=   57.20 X=   0.12 S2= 197.48 | E=  1.18 O=  0.23 R=   220.00 ms  ratio=   1.00x  file=123.1 MiB  RMSE=0.000e+00 maxae=0.000e+00
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     cuszp_1e3        N=8     r=0 C=  5.33 W=   146.07 F=    0.06 S=   58.04 X=   0.11 S2=  49.87 | E=  1.26 O=  0.23 R=   218.07 ms  ratio=   3.71x  file=33.2 MiB  RMSE=5.773e-04 maxae=1.000e-03
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     cuszp_1e6        N=8     r=0 C=  3.69 W=   298.69 F=    0.06 S=   49.04 X=   0.14 S2=  64.09 | E=  1.53 O=  0.25 R=   251.38 ms  ratio=   1.70x  file=72.5 MiB  RMSE=7.318e-07 maxae=1.907e-06
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     sz3_1e3          N=8     r=0 C=  2.31 W=  1096.10 F=    0.08 S=   63.10 X=   0.15 S2=  83.65 | E=  1.19 O=  0.25 R=   669.32 ms  ratio=   5.85x  file=21.1 MiB  RMSE=5.495e-04 maxae=1.003e-03
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+[FAIL] ocean_temp/sz3_1e6 maxae=4.768372e-06 exceeds 2x bound 1.000000e-06
+  ocean_temp     sz3_1e6          N=8     r=0 C=  2.42 W=  2609.88 F=    0.08 S=   43.02 X=   0.16 S2=  51.49 | E=  1.46 O=  0.38 R=  2231.52 ms  ratio=   1.80x  file=68.3 MiB  RMSE=6.353e-07 maxae=4.768e-06
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     zfp_cpu_r4       N=8     r=0 C=  3.18 W=  1104.76 F=    0.08 S=   69.43 X=   0.15 S2=  52.50 | E=  1.33 O=  0.25 R=   444.91 ms  ratio=   5.67x  file=21.7 MiB  RMSE=4.572e-03 maxae=7.276e-01
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+[H5Z_comp] zfp CUDA reported 356040 B for a fixed-rate stream of 2848320 B; storing the full stream (zfp CUDA size bug workaround, H5ZCOMP_NO_ZFP_CUDA_FIX=1 disables)
+  ocean_temp     zfp_gpu_r4       N=8     r=0 C=  5.11 W=   165.76 F=    0.08 S=   65.31 X=   0.12 S2=  72.50 | E=  1.20 O=  0.24 R=    64.07 ms  ratio=   5.67x  file=21.7 MiB  RMSE=4.572e-03 maxae=7.276e-01
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     zfp_cpu_r8       N=8     r=0 C=  2.11 W=  1303.49 F=    0.09 S=   63.83 X=   0.11 S2=  63.37 | E=  3.81 O=  0.25 R=   624.42 ms  ratio=   2.83x  file=43.5 MiB  RMSE=3.321e-04 maxae=3.998e-02
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     zfp_gpu_r8       N=8     r=0 C=  2.28 W=   172.23 F=    0.08 S=   56.21 X=   0.50 S2=  53.88 | E=  2.58 O=  0.25 R=    80.62 ms  ratio=   2.83x  file=43.5 MiB  RMSE=3.321e-04 maxae=3.998e-02
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     zfp_cpu_r12      N=8     r=0 C=  2.17 W=  1519.46 F=    0.07 S=   43.05 X=   0.11 S2=  44.32 | E=  1.27 O=  0.25 R=   761.48 ms  ratio=   1.89x  file=65.2 MiB  RMSE=2.092e-05 maxae=1.959e-03
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     zfp_gpu_r12      N=8     r=0 C=  2.28 W=   142.36 F=    0.06 S=   52.90 X=   0.91 S2=  42.04 | E=  1.13 O=  0.24 R=   108.38 ms  ratio=   1.89x  file=65.2 MiB  RMSE=2.092e-05 maxae=1.959e-03
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     zfp_cpu_r16      N=8     r=0 C=  2.44 W=  1668.63 F=    0.08 S=   38.16 X=   0.18 S2= 118.43 | E=  1.18 O=  0.37 R=   899.70 ms  ratio=   1.42x  file=86.9 MiB  RMSE=1.326e-06 maxae=1.364e-04
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     zfp_gpu_r16      N=8     r=0 C=  2.52 W=   172.95 F=    0.06 S=  140.38 X=   0.11 S2=  55.95 | E=  1.12 O=  0.23 R=    89.20 ms  ratio=   1.42x  file=86.9 MiB  RMSE=1.326e-06 maxae=1.364e-04
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     szx_1e3          N=8     r=0 C=  4.42 W=   343.52 F=    0.07 S=   83.27 X=   0.11 S2=  50.71 | E=  1.08 O=  0.24 R=   193.00 ms  ratio=   2.35x  file=52.3 MiB  RMSE=1.917e-04 maxae=4.883e-04
+CHUNKINFO dataset=ocean_temp chunk_n=8 nchunks_actual=8 chunk_elems=4035120 chunk_bytes=16140480
+  ocean_temp     szx_1e6          N=8     r=0 C=  2.56 W=   395.43 F=    0.07 S=   85.53 X=   0.11 S2=  51.88 | E=  1.08 O=  0.32 R=   212.36 ms  ratio=   1.35x  file=91.3 MiB  RMSE=0.000e+00 maxae=0.000e+00
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60310/results_h5zcomp_matrix_chunk_N8_ocean_temp.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60310/results_ext_matrix_chunk_N8_ocean_temp.csv (15 run, 0 failed configuration(s) recorded, 0 codec skip(s))

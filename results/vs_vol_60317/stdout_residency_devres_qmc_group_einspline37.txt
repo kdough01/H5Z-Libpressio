@@ -1,0 +1,58 @@
+[h5zcomp] mode: arm=devres path=chunk group=all progressive=-
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=4 reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=einspline37 chunk_n=4 nchunks_actual=4 chunk_elems=847553220 chunk_bytes=3390212880
+[H5Z_comp] exception: std::bad_alloc
+HDF5-DIAG: Error detected in HDF5 (2.3.0):
+  #000: /home/kdougherty/src/hdf5-blob-dset-io/src/H5D.c line 1051 in H5Dread(): can't synchronously read data
+    major: Dataset
+    minor: Read failed
+  #001: /home/kdougherty/src/hdf5-blob-dset-io/src/H5D.c line 999 in H5D__read_api_common(): can't read data
+    major: Dataset
+    minor: Read failed
+  #002: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLcallback.c line 2209 in H5VL_dataset_read(): dataset read failed
+    major: Virtual Object Layer
+    minor: Read failed
+  #003: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLcallback.c line 2165 in H5VL__dataset_read(): dataset read failed
+    major: Virtual Object Layer
+    minor: Read failed
+  #004: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLnative_dataset.c line 375 in H5VL__native_dataset_read(): filter's dataset-level read failed
+    major: Dataset
+    minor: Read failed
+  #005: /home/kdougherty/src/hdf5-blob-dset-io/src/H5Dint.c line 3513 in H5D__filter_dset_io(): dataset-level callback of filter 33010 failed
+    major: Data filters
+    minor: Read failed
+[ERR] H5Dread einspline37/cuszp_1e3
+[RECORDED FAILURE] einspline37/cuszp_1e3 N=4
+CHUNKINFO dataset=einspline37 chunk_n=4 nchunks_actual=4 chunk_elems=847553220 chunk_bytes=3390212880
+[H5Z_comp] exception: an illegal memory access was encountered
+HDF5-DIAG: Error detected in HDF5 (2.3.0):
+  #000: /home/kdougherty/src/hdf5-blob-dset-io/src/H5D.c line 1360 in H5Dwrite(): can't synchronously write data
+    major: Dataset
+    minor: Write failed
+  #001: /home/kdougherty/src/hdf5-blob-dset-io/src/H5D.c line 1307 in H5D__write_api_common(): can't write data
+    major: Dataset
+    minor: Write failed
+  #002: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLcallback.c line 2340 in H5VL_dataset_write(): dataset write failed
+    major: Virtual Object Layer
+    minor: Write failed
+  #003: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLcallback.c line 2296 in H5VL__dataset_write(): dataset write failed
+    major: Virtual Object Layer
+    minor: Write failed
+  #004: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLnative_dataset.c line 433 in H5VL__native_dataset_write(): filter's dataset-level write failed
+    major: Dataset
+    minor: Write failed
+  #005: /home/kdougherty/src/hdf5-blob-dset-io/src/H5Dint.c line 3513 in H5D__filter_dset_io(): dataset-level callback of filter 33010 failed
+    major: Data filters
+    minor: Write failed
+[ERR] H5Dwrite einspline37/cuszp_1e6
+[RECORDED FAILURE] einspline37/cuszp_1e6 N=4
+[ERR] cudaMalloc/upload 12932.6 MiB failed for einspline37: an illegal memory access was encountered
+[RECORDED FAILURE] einspline37/zfp_gpu_r4 N=4
+[ERR] cudaMalloc/upload 12932.6 MiB failed for einspline37: an illegal memory access was encountered
+[RECORDED FAILURE] einspline37/zfp_gpu_r8 N=4
+[ERR] cudaMalloc/upload 12932.6 MiB failed for einspline37: an illegal memory access was encountered
+[RECORDED FAILURE] einspline37/zfp_gpu_r12 N=4
+[ERR] cudaMalloc/upload 12932.6 MiB failed for einspline37: an illegal memory access was encountered
+[RECORDED FAILURE] einspline37/zfp_gpu_r16 N=4
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60317/results_h5zcomp_residency_devres_qmc_group_einspline37.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60317/results_ext_residency_devres_qmc_group_einspline37.csv (6 run, 6 failed configuration(s) recorded, 0 codec skip(s))

@@ -1,0 +1,35 @@
+[h5zcomp] mode: arm=hostsim path=direct group=- progressive=-
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=16 reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=nyx_baryon chunk_n=16 nchunks_actual=16 chunk_elems=8388608 chunk_bytes=33554432
+  nyx_baryon     noop             N=16    r=0 C=  0.87 W=   485.84 F=    0.14 S=   58.30 X=   0.18 S2=  21.66 | E=  4.34 O=  0.25 R=   151.47 ms  ratio=   1.00x  file=512.0 MiB  RMSE=0.000e+00 maxae=0.000e+00 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=16 nchunks_actual=16 chunk_elems=8388608 chunk_bytes=33554432
+  nyx_baryon     cuszp_1e3        N=16    r=0 C= 24.88 W=   196.36 F=    0.06 S=   61.58 X=   0.17 S2= 115.86 | E=  1.43 O=  0.25 R=   543.76 ms  ratio=   4.29x  file=119.3 MiB  RMSE=5.773e-04 maxae=1.000e-03 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=16 nchunks_actual=16 chunk_elems=8388608 chunk_bytes=33554432
+  nyx_baryon     cuszp_1e6        N=16    r=0 C=  2.56 W=   270.88 F=    0.10 S=   66.13 X=   0.26 S2=  60.76 | E=  0.25 O=  0.39 R=   567.90 ms  ratio=   1.80x  file=284.2 MiB  RMSE=5.784e-07 maxae=1.907e-06 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=16 nchunks_actual=16 chunk_elems=8388608 chunk_bytes=33554432
+  nyx_baryon     sz3_1e3          N=16    r=0 C= 10.97 W=  4044.46 F=    0.08 S=   51.09 X=   0.18 S2=  34.95 | E=  1.31 O=  0.38 R=  2673.83 ms  ratio=   7.91x  file=64.7 MiB  RMSE=5.764e-04 maxae=1.000e-03 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=16 nchunks_actual=16 chunk_elems=8388608 chunk_bytes=33554432
+  nyx_baryon     sz3_1e6          N=16    r=0 C=  4.77 W=  7230.70 F=    0.09 S=   43.91 X=   0.20 S2=  29.30 | E=  1.11 O=  0.38 R=  7714.75 ms  ratio=   2.13x  file=240.4 MiB  RMSE=5.531e-07 maxae=1.431e-06 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=16 nchunks_actual=16 chunk_elems=8388608 chunk_bytes=33554432
+  nyx_baryon     zfp_cpu_r4       N=16    r=0 C=  8.85 W=  2473.18 F=    0.09 S=   82.46 X=   0.19 S2=  16.98 | E=  1.24 O=  0.38 R=  1401.95 ms  ratio=   8.00x  file=64.0 MiB  RMSE=3.991e-03 maxae=3.861e-01 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=16 nchunks_actual=16 chunk_elems=8388608 chunk_bytes=33554432
+[H5Z_comp] zfp CUDA reported 524288 B for a fixed-rate stream of 4194304 B; storing the full stream (zfp CUDA size bug workaround, H5ZCOMP_NO_ZFP_CUDA_FIX=1 disables)
+  nyx_baryon     zfp_gpu_r4       N=16    r=0 C=  2.25 W=   218.18 F=    0.07 S=  100.06 X=   0.14 S2=  22.91 | E=  1.23 O=  0.25 R=   182.23 ms  ratio=   8.00x  file=64.0 MiB  RMSE=3.991e-03 maxae=3.861e-01 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=16 nchunks_actual=16 chunk_elems=8388608 chunk_bytes=33554432
+  nyx_baryon     zfp_cpu_r8       N=16    r=0 C=  2.06 W=  2966.03 F=    0.10 S=   55.59 X=   0.18 S2=  17.31 | E=  1.33 O=  0.39 R=  1891.36 ms  ratio=   4.00x  file=128.0 MiB  RMSE=2.611e-04 maxae=2.497e-02 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=16 nchunks_actual=16 chunk_elems=8388608 chunk_bytes=33554432
+  nyx_baryon     zfp_gpu_r8       N=16    r=0 C=  9.57 W=   243.08 F=    0.07 S=   47.97 X=   0.13 S2=  16.33 | E=  2.82 O=  0.32 R=   554.12 ms  ratio=   4.00x  file=128.0 MiB  RMSE=2.611e-04 maxae=2.497e-02 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=16 nchunks_actual=16 chunk_elems=8388608 chunk_bytes=33554432
+  nyx_baryon     zfp_cpu_r12      N=16    r=0 C=  1.98 W=  3436.08 F=    0.07 S=   47.26 X=   0.11 S2=   3.93 | E=  2.96 O=  0.26 R=  2294.85 ms  ratio=   2.67x  file=192.0 MiB  RMSE=1.632e-05 maxae=1.528e-03 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=16 nchunks_actual=16 chunk_elems=8388608 chunk_bytes=33554432
+  nyx_baryon     zfp_gpu_r12      N=16    r=0 C=  5.45 W=   251.98 F=    0.08 S=   91.79 X=   0.13 S2=  17.98 | E=  1.07 O=  0.27 R=   233.40 ms  ratio=   2.67x  file=192.0 MiB  RMSE=1.632e-05 maxae=1.528e-03 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=16 nchunks_actual=16 chunk_elems=8388608 chunk_bytes=33554432
+  nyx_baryon     zfp_cpu_r16      N=16    r=0 C=  4.31 W=  3804.53 F=    0.08 S=   51.97 X=   0.12 S2=   4.99 | E=  1.54 O=  0.26 R=  2674.34 ms  ratio=   2.00x  file=256.0 MiB  RMSE=1.020e-06 maxae=1.040e-04 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=16 nchunks_actual=16 chunk_elems=8388608 chunk_bytes=33554432
+  nyx_baryon     zfp_gpu_r16      N=16    r=0 C=  9.57 W=   289.71 F=    0.09 S=   60.49 X=   0.18 S2=  27.52 | E=  1.07 O=  0.25 R=   244.84 ms  ratio=   2.00x  file=256.0 MiB  RMSE=1.020e-06 maxae=1.040e-04 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=16 nchunks_actual=16 chunk_elems=8388608 chunk_bytes=33554432
+  nyx_baryon     szx_1e3          N=16    r=0 C=  5.18 W=  1179.43 F=    0.08 S=   82.67 X=   0.11 S2=  65.13 | E=  1.10 O=  0.31 R=  1015.71 ms  ratio=   2.33x  file=219.3 MiB  RMSE=2.012e-04 maxae=4.883e-04 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=16 nchunks_actual=16 chunk_elems=8388608 chunk_bytes=33554432
+  nyx_baryon     szx_1e6          N=16    r=0 C=  6.01 W=  1167.57 F=    0.09 S=   81.68 X=   0.12 S2=  63.17 | E=  1.16 O=  0.27 R=   788.51 ms  ratio=   1.34x  file=383.4 MiB  RMSE=1.712e-07 maxae=4.768e-07 (log-space)
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60309/results_h5zcomp_matrix_direct_N16_nyx_baryon.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60309/results_ext_matrix_direct_N16_nyx_baryon.csv (15 run, 0 failed configuration(s) recorded, 0 codec skip(s))

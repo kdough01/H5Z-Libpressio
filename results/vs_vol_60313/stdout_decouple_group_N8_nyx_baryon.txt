@@ -1,0 +1,12 @@
+[h5zcomp] mode: arm=hostsim path=chunk group=all progressive=-
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=8 reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=nyx_baryon chunk_n=8 nchunks_actual=8 chunk_elems=16777216 chunk_bytes=67108864
+  nyx_baryon     cuszp_1e3        N=8     r=0 C=  1.01 W=   220.84 F=    0.16 S=   82.32 X=   0.18 S2=  65.72 | E=  1.15 O=  0.26 R=   569.17 ms  ratio=   4.29x  file=119.3 MiB  RMSE=5.773e-04 maxae=1.000e-03 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=8 nchunks_actual=8 chunk_elems=16777216 chunk_bytes=67108864
+  nyx_baryon     sz3_1e3          N=8     r=0 C=  6.42 W=  4218.84 F=    0.08 S=   45.40 X=   0.17 S2=  23.27 | E=  2.16 O=  0.27 R=  2987.27 ms  ratio=   7.85x  file=65.3 MiB  RMSE=5.766e-04 maxae=1.000e-03 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=8 nchunks_actual=8 chunk_elems=16777216 chunk_bytes=67108864
+  nyx_baryon     zfp_cpu_r8       N=8     r=0 C=  6.39 W=  3094.18 F=    0.14 S=   88.87 X=   0.20 S2=  15.27 | E=  1.85 O=  0.39 R=  2053.33 ms  ratio=   4.00x  file=128.0 MiB  RMSE=2.611e-04 maxae=2.497e-02 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=8 nchunks_actual=8 chunk_elems=16777216 chunk_bytes=67108864
+  nyx_baryon     szx_1e3          N=8     r=0 C=  2.07 W=  1237.95 F=    0.12 S=   43.98 X=   0.12 S2=  71.06 | E=  1.17 O=  0.26 R=  1207.49 ms  ratio=   2.33x  file=219.3 MiB  RMSE=2.012e-04 maxae=4.883e-04 (log-space)
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60313/results_h5zcomp_decouple_group_N8_nyx_baryon.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60313/results_ext_decouple_group_N8_nyx_baryon.csv (4 run, 0 failed configuration(s) recorded, 0 codec skip(s))

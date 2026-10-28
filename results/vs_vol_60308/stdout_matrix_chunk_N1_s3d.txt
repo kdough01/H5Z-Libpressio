@@ -1,0 +1,35 @@
+[h5zcomp] mode: arm=hostsim path=chunk group=- progressive=-
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=1 reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=s3d chunk_n=1 nchunks_actual=1 chunk_elems=125000000 chunk_bytes=1000000000
+  s3d            noop             N=1     r=0 C=  1.17 W=  2177.50 F=    0.15 S=   40.36 X=   0.24 S2= 101.89 | E=  1.07 O=  0.42 R=  1355.65 ms  ratio=   1.00x  file=953.7 MiB  RMSE=0.000e+00 maxae=0.000e+00
+CHUNKINFO dataset=s3d chunk_n=1 nchunks_actual=1 chunk_elems=125000000 chunk_bytes=1000000000
+  s3d            cuszp_1e3        N=1     r=0 C= 41.80 W=   830.99 F=    0.07 S=   62.80 X=   0.19 S2=  54.73 | E=  1.63 O=  0.25 R=  1365.26 ms  ratio=  46.22x  file=20.6 MiB  RMSE=4.899e-04 maxae=1.000e-03
+CHUNKINFO dataset=s3d chunk_n=1 nchunks_actual=1 chunk_elems=125000000 chunk_bytes=1000000000
+  s3d            cuszp_1e6        N=1     r=0 C=  5.44 W=   922.80 F=    0.07 S=   54.30 X=   0.12 S2=  52.79 | E=  1.18 O=  0.26 R=  1404.38 ms  ratio=  15.14x  file=63.0 MiB  RMSE=3.421e-07 maxae=1.000e-06
+CHUNKINFO dataset=s3d chunk_n=1 nchunks_actual=1 chunk_elems=125000000 chunk_bytes=1000000000
+  s3d            sz3_1e3          N=1     r=0 C=  8.92 W=  3113.58 F=    0.25 S=   45.66 X=   0.22 S2=  24.55 | E=  1.18 O=  0.26 R=  1400.37 ms  ratio=19201.23x  file=0.1 MiB  RMSE=1.247e-04 maxae=1.000e-03
+CHUNKINFO dataset=s3d chunk_n=1 nchunks_actual=1 chunk_elems=125000000 chunk_bytes=1000000000
+  s3d            sz3_1e6          N=1     r=0 C=  3.64 W=  3351.82 F=    0.05 S=   52.39 X=   0.15 S2=  55.98 | E=  1.08 O=  0.26 R=  1466.21 ms  ratio= 244.44x  file=3.9 MiB  RMSE=2.617e-07 maxae=1.000e-06
+CHUNKINFO dataset=s3d chunk_n=1 nchunks_actual=1 chunk_elems=125000000 chunk_bytes=1000000000
+  s3d            zfp_cpu_r4       N=1     r=0 C=  2.39 W=  4324.30 F=    0.09 S=   61.47 X=   0.21 S2=  62.79 | E=  1.12 O=  0.27 R=  2186.52 ms  ratio=  16.00x  file=59.6 MiB  RMSE=5.735e-08 maxae=3.710e-06
+CHUNKINFO dataset=s3d chunk_n=1 nchunks_actual=1 chunk_elems=125000000 chunk_bytes=1000000000
+[H5Z_comp] zfp CUDA reported 7812500 B for a fixed-rate stream of 62500000 B; storing the full stream (zfp CUDA size bug workaround, H5ZCOMP_NO_ZFP_CUDA_FIX=1 disables)
+  s3d            zfp_gpu_r4       N=1     r=0 C=  2.22 W=   883.45 F=    0.07 S=   44.84 X=   0.12 S2=  71.70 | E=  1.08 O=  0.25 R=  1150.47 ms  ratio=  16.00x  file=59.6 MiB  RMSE=5.735e-08 maxae=3.710e-06
+CHUNKINFO dataset=s3d chunk_n=1 nchunks_actual=1 chunk_elems=125000000 chunk_bytes=1000000000
+  s3d            zfp_cpu_r8       N=1     r=0 C=  1.79 W=  5399.49 F=    0.10 S=   47.45 X=   0.19 S2=  56.68 | E=  1.25 O=  0.39 R=  2834.90 ms  ratio=   8.00x  file=119.2 MiB  RMSE=1.568e-09 maxae=1.264e-07
+CHUNKINFO dataset=s3d chunk_n=1 nchunks_actual=1 chunk_elems=125000000 chunk_bytes=1000000000
+  s3d            zfp_gpu_r8       N=1     r=0 C=  5.81 W=   974.68 F=    0.08 S=   43.48 X=   0.12 S2=  56.25 | E=  1.16 O=  0.26 R=  1172.50 ms  ratio=   8.00x  file=119.2 MiB  RMSE=1.568e-09 maxae=1.264e-07
+CHUNKINFO dataset=s3d chunk_n=1 nchunks_actual=1 chunk_elems=125000000 chunk_bytes=1000000000
+  s3d            zfp_cpu_r12      N=1     r=0 C=  2.52 W=  6129.22 F=    0.10 S=   75.22 X=   0.15 S2=  77.44 | E=  1.26 O=  0.25 R=  3406.54 ms  ratio=   5.33x  file=178.8 MiB  RMSE=8.514e-11 maxae=8.036e-09
+CHUNKINFO dataset=s3d chunk_n=1 nchunks_actual=1 chunk_elems=125000000 chunk_bytes=1000000000
+  s3d            zfp_gpu_r12      N=1     r=0 C=  7.73 W=  1083.99 F=    0.09 S=   47.22 X=   0.13 S2=  44.79 | E=  3.41 O=  0.26 R=  1252.76 ms  ratio=   5.33x  file=178.8 MiB  RMSE=8.514e-11 maxae=8.036e-09
+CHUNKINFO dataset=s3d chunk_n=1 nchunks_actual=1 chunk_elems=125000000 chunk_bytes=1000000000
+  s3d            zfp_cpu_r16      N=1     r=0 C=  8.06 W=  6802.62 F=    0.11 S=   49.77 X=   0.12 S2=  48.41 | E=  1.29 O=  0.26 R=  4010.40 ms  ratio=   4.00x  file=238.4 MiB  RMSE=5.312e-12 maxae=6.187e-10
+CHUNKINFO dataset=s3d chunk_n=1 nchunks_actual=1 chunk_elems=125000000 chunk_bytes=1000000000
+  s3d            zfp_gpu_r16      N=1     r=0 C=  5.48 W=  1219.35 F=    0.11 S=   97.11 X=   0.12 S2=  53.81 | E=  1.08 O=  0.28 R=  1303.96 ms  ratio=   4.00x  file=238.4 MiB  RMSE=5.312e-12 maxae=6.187e-10
+CHUNKINFO dataset=s3d chunk_n=1 nchunks_actual=1 chunk_elems=125000000 chunk_bytes=1000000000
+  s3d            szx_1e3          N=1     r=0 C=  5.67 W=  1164.42 F=    0.07 S=   90.65 X=   0.12 S2=  62.74 | E=  1.12 O=  0.26 R=  1345.46 ms  ratio=  26.12x  file=36.5 MiB  RMSE=3.308e-04 maxae=1.000e-03
+CHUNKINFO dataset=s3d chunk_n=1 nchunks_actual=1 chunk_elems=125000000 chunk_bytes=1000000000
+  s3d            szx_1e6          N=1     r=0 C=  2.59 W=  1220.34 F=    0.07 S=   97.88 X=   0.12 S2=  62.00 | E=  1.08 O=  0.25 R=  1534.58 ms  ratio=   7.92x  file=120.4 MiB  RMSE=3.625e-07 maxae=9.996e-07
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60308/results_h5zcomp_matrix_chunk_N1_s3d.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60308/results_ext_matrix_chunk_N1_s3d.csv (15 run, 0 failed configuration(s) recorded, 0 codec skip(s))

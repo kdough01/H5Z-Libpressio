@@ -1,0 +1,18 @@
+[h5zcomp] mode: arm=hostsim path=chunk group=- progressive=-
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=per-entry (vol:chunk_n, default 1) reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     cuszp_1e3        N=1     r=0 C=  0.71 W=   182.80 F=    0.09 S=   65.47 X=   0.13 S2=  26.93 | E=  1.04 O=  0.25 R=   211.74 ms  ratio=   3.71x  file=33.2 MiB  RMSE=5.773e-04 maxae=1.000e-03
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+[FAIL] ocean_temp/cuszp_1e6 maxae=4.478200e+01 exceeds 2x bound 1.000000e-06
+  ocean_temp     cuszp_1e6        N=1     r=0 C=  4.72 W=   259.16 F=    0.06 S=   51.00 X=   0.11 S2=  73.67 | E=  1.09 O=  0.26 R=   245.46 ms  ratio=   1.70x  file=72.5 MiB  RMSE=4.911e-01 maxae=4.478e+01
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+[H5Z_comp] zfp CUDA reported 2136240 B for a fixed-rate stream of 17089920 B; storing the full stream (zfp CUDA size bug workaround, H5ZCOMP_NO_ZFP_CUDA_FIX=1 disables)
+  ocean_temp     zfp_gpu_r4       N=1     r=0 C=  5.29 W=   187.89 F=    0.07 S=   51.63 X=   0.14 S2=  21.20 | E=  1.14 O=  0.25 R=   168.05 ms  ratio=   7.56x  file=16.3 MiB  RMSE=4.110e-03 maxae=3.760e-01
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     zfp_gpu_r8       N=1     r=0 C=  2.01 W=   230.56 F=    0.06 S=   48.23 X=   0.13 S2=  35.98 | E=  1.06 O=  0.26 R=   173.25 ms  ratio=   3.78x  file=32.6 MiB  RMSE=2.793e-04 maxae=2.552e-02
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     zfp_gpu_r12      N=1     r=0 C= 14.92 W=   241.95 F=    0.07 S=   75.18 X=   0.14 S2=  37.77 | E=  1.17 O=  0.25 R=   195.94 ms  ratio=   2.52x  file=48.9 MiB  RMSE=1.752e-05 maxae=1.611e-03
+CHUNKINFO dataset=ocean_temp chunk_n=1 nchunks_actual=1 chunk_elems=32280960 chunk_bytes=129123840
+  ocean_temp     zfp_gpu_r16      N=1     r=0 C=  2.20 W=   268.48 F=    0.06 S=   55.23 X=   0.14 S2=  65.31 | E=  1.29 O=  0.25 R=   213.08 ms  ratio=   1.89x  file=65.2 MiB  RMSE=1.114e-06 maxae=1.140e-04
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60316/results_h5zcomp_residency_hostsim_ocean_temp.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60316/results_ext_residency_hostsim_ocean_temp.csv (6 run, 0 failed configuration(s) recorded, 0 codec skip(s))

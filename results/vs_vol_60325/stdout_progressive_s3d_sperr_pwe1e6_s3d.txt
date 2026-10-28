@@ -1,0 +1,28 @@
+[h5zcomp] mode: arm=hostsim path=chunk group=all progressive=5,10,25,50,75,100
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=100 reps=3
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=s3d chunk_n=100 nchunks_actual=100 chunk_elems=1250000 chunk_bytes=10000000
+  s3d            sperr_pwe1e6     N=100   r=0 C=  2.43 W=  9252.96 F=    0.10 S=   41.90 X=   0.28 S2=  46.21 | E=  1.09 O=  0.42 R=  4801.21 ms  ratio= 345.14x  file=2.8 MiB  RMSE=1.191e-07 maxae=9.999e-07
+  progressive s3d          sperr_pwe1e6     5%  chunks=5  bytes=144870/2897345  R=  3930.97 ms  RMSE=1.154e-05 maxae=4.618e-04
+  progressive s3d          sperr_pwe1e6    10%  chunks=10  bytes=289740/2897345  R=  3970.86 ms  RMSE=3.923e-06 maxae=1.513e-04
+  progressive s3d          sperr_pwe1e6    25%  chunks=25  bytes=724350/2897345  R=  4177.52 ms  RMSE=9.352e-07 maxae=2.057e-05
+  progressive s3d          sperr_pwe1e6    50%  chunks=50  bytes=1448700/2897345  R=  4131.47 ms  RMSE=3.243e-07 maxae=5.737e-06
+  progressive s3d          sperr_pwe1e6    75%  chunks=75  bytes=2173050/2897345  R=  4220.94 ms  RMSE=2.034e-07 maxae=3.645e-06
+  progressive s3d          sperr_pwe1e6   100%  chunks=100  bytes=2897345/2897345  R=  4525.37 ms  RMSE=1.191e-07 maxae=9.999e-07
+CHUNKINFO dataset=s3d chunk_n=100 nchunks_actual=100 chunk_elems=1250000 chunk_bytes=10000000
+  s3d            sperr_pwe1e6     N=100   r=1 C=  5.11 W=  8254.86 F=    0.07 S=   34.75 X=   0.23 S2=  48.87 | E=  1.13 O=  0.38 R=  4395.15 ms  ratio= 345.14x  file=2.8 MiB  RMSE=1.191e-07 maxae=9.999e-07
+  progressive s3d          sperr_pwe1e6     5%  chunks=5  bytes=144870/2897345  R=  3921.46 ms  RMSE=1.154e-05 maxae=4.618e-04
+  progressive s3d          sperr_pwe1e6    10%  chunks=10  bytes=289740/2897345  R=  3782.25 ms  RMSE=3.923e-06 maxae=1.513e-04
+  progressive s3d          sperr_pwe1e6    25%  chunks=25  bytes=724350/2897345  R=  3961.41 ms  RMSE=9.352e-07 maxae=2.057e-05
+  progressive s3d          sperr_pwe1e6    50%  chunks=50  bytes=1448700/2897345  R=  4064.12 ms  RMSE=3.243e-07 maxae=5.737e-06
+  progressive s3d          sperr_pwe1e6    75%  chunks=75  bytes=2173050/2897345  R=  4083.83 ms  RMSE=2.034e-07 maxae=3.645e-06
+  progressive s3d          sperr_pwe1e6   100%  chunks=100  bytes=2897345/2897345  R=  4262.08 ms  RMSE=1.191e-07 maxae=9.999e-07
+CHUNKINFO dataset=s3d chunk_n=100 nchunks_actual=100 chunk_elems=1250000 chunk_bytes=10000000
+  s3d            sperr_pwe1e6     N=100   r=2 C=  2.35 W=  8190.62 F=    0.06 S=   46.62 X=   0.16 S2=  66.79 | E=  1.31 O=  0.25 R=  4374.65 ms  ratio= 345.14x  file=2.8 MiB  RMSE=1.191e-07 maxae=9.999e-07
+  progressive s3d          sperr_pwe1e6     5%  chunks=5  bytes=144870/2897345  R=  3927.29 ms  RMSE=1.154e-05 maxae=4.618e-04
+  progressive s3d          sperr_pwe1e6    10%  chunks=10  bytes=289740/2897345  R=  3854.16 ms  RMSE=3.923e-06 maxae=1.513e-04
+  progressive s3d          sperr_pwe1e6    25%  chunks=25  bytes=724350/2897345  R=  3900.36 ms  RMSE=9.352e-07 maxae=2.057e-05
+  progressive s3d          sperr_pwe1e6    50%  chunks=50  bytes=1448700/2897345  R=  4032.54 ms  RMSE=3.243e-07 maxae=5.737e-06
+  progressive s3d          sperr_pwe1e6    75%  chunks=75  bytes=2173050/2897345  R=  4135.42 ms  RMSE=2.034e-07 maxae=3.645e-06
+  progressive s3d          sperr_pwe1e6   100%  chunks=100  bytes=2897345/2897345  R=  4391.12 ms  RMSE=1.191e-07 maxae=9.999e-07
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60325/results_h5zcomp_progressive_s3d_sperr_pwe1e6_s3d.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60325/results_ext_progressive_s3d_sperr_pwe1e6_s3d.csv (3 run, 0 failed configuration(s) recorded, 0 codec skip(s))

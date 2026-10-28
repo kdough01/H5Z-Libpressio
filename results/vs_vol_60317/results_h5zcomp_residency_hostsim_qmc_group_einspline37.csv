@@ -1,0 +1,8 @@
+dataset,compressor,path,op,phase,ms,ratio,rmse
+einspline37,cuszp_1e3,h5zcomp,write,total,4687.4443,5.2582,
+einspline37,cuszp_1e3,h5zcomp,write,flush,0.1930,,
+einspline37,cuszp_1e3,h5zcomp,write,sync,21.6916,,
+einspline37,cuszp_1e3,h5zcomp,write,close,0.1704,,
+einspline37,cuszp_1e3,h5zcomp,write,csync,75.5248,,
+einspline37,cuszp_1e3,h5zcomp,read,evict,0.2275,,
+einspline37,cuszp_1e3,h5zcomp,read,total,15494.5709,,4.528553e-01

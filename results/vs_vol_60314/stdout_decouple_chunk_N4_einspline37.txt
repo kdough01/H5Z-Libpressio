@@ -1,0 +1,12 @@
+[h5zcomp] mode: arm=hostsim path=chunk group=- progressive=-
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=4 reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=einspline37 chunk_n=4 nchunks_actual=4 chunk_elems=847553220 chunk_bytes=3390212880
+  einspline37    cuszp_1e3        N=4     r=0 C=  1.24 W= 18304.68 F=    0.18 S=   86.30 X=   0.29 S2=  55.91 | E=  0.22 O=  0.39 R= 21740.30 ms  ratio=   3.37x  file=3833.6 MiB  RMSE=5.683e-04 maxae=1.001e-03
+CHUNKINFO dataset=einspline37 chunk_n=4 nchunks_actual=4 chunk_elems=847553220 chunk_bytes=3390212880
+  einspline37    sz3_1e3          N=4     r=0 C=145.37 W=121155.47 F=    0.14 S=   62.78 X=   0.35 S2=  35.07 | E=  0.25 O=  0.36 R=130243.03 ms  ratio=   3.38x  file=3828.2 MiB  RMSE=5.742e-04 maxae=1.000e-03
+CHUNKINFO dataset=einspline37 chunk_n=4 nchunks_actual=4 chunk_elems=847553220 chunk_bytes=3390212880
+  einspline37    zfp_cpu_r8       N=4     r=0 C=161.80 W= 79035.28 F=    0.15 S=   68.37 X=   0.26 S2=  49.73 | E=  0.42 O=  0.36 R= 83959.29 ms  ratio=   4.00x  file=3233.2 MiB  RMSE=4.067e-02 maxae=3.363e+00
+CHUNKINFO dataset=einspline37 chunk_n=4 nchunks_actual=4 chunk_elems=847553220 chunk_bytes=3390212880
+  einspline37    szx_1e3          N=4     r=0 C=119.93 W= 52348.83 F=    0.15 S=  105.86 X=   0.36 S2=  56.53 | E=  0.92 O=  0.36 R= 43208.53 ms  ratio=   1.60x  file=8080.6 MiB  RMSE=1.417e-04 maxae=1.000e-03
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60314/results_h5zcomp_decouple_chunk_N4_einspline37.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60314/results_ext_decouple_chunk_N4_einspline37.csv (4 run, 0 failed configuration(s) recorded, 0 codec skip(s))

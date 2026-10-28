@@ -1,0 +1,5 @@
+dataset,compressor,codec_kind,chunk_n,rep,logical_bytes,stored_bytes,ratio,create_ms,write_ms,flush_ms,sync_ms,close_ms,csync_ms,evict_ms,open_ms,read_ms,rmse,abs_thresh,maxae,bound_ok,write_wall_ms,d2h_ms,read_wall_ms,arm,path,group,units,chunks_io,bytes_io,bytes_staged
+einspline37,cuszp_1e3,gpu,1,0,13560851520,2578978422,5.2582,1.2081,5917.8198,0.2867,62.7781,0.2727,83.5441,0.2570,0.4788,15986.2835,4.524818e-01,1.000000e-03,2.125822e+01,0,5917.8189,0.0000,15986.2827,hostsim,chunk,all,1,1,2578978422,0
+einspline37,sz3_1e3,cpu,1,0,13560851520,4013662606,3.3787,107.2065,114027.5018,0.1461,75.9248,0.2069,50.6886,0.2226,0.3767,132569.4752,5.741519e-04,1.000000e-03,1.000000e-03,1,114027.5010,0.0000,132569.4744,hostsim,chunk,all,1,1,4013662606,0
+einspline37,zfp_cpu_r8,cpu,1,0,13560851520,3390212936,4.0000,116.7135,71291.6451,0.1527,59.0765,0.1876,41.9775,0.2277,0.3610,78374.5823,4.066683e-02,0.000000e+00,3.362678e+00,1,71291.6442,0.0000,78374.5815,hostsim,chunk,all,1,1,3390212936,0
+einspline37,szx_1e3,cpu,1,-1,13560851520,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,-1,-1,-1,hostsim,chunk,all,0,0,0,0

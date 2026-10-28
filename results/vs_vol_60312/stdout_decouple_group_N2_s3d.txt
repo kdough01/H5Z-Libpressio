@@ -1,0 +1,12 @@
+[h5zcomp] mode: arm=hostsim path=chunk group=all progressive=-
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=2 reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=s3d chunk_n=2 nchunks_actual=2 chunk_elems=62500000 chunk_bytes=500000000
+  s3d            cuszp_1e3        N=2     r=0 C=  1.11 W=   167.65 F=    0.11 S=   86.85 X=   0.21 S2=  89.46 | E=  1.07 O=  0.26 R=   720.64 ms  ratio=  46.22x  file=20.6 MiB  RMSE=4.899e-04 maxae=1.000e-03
+CHUNKINFO dataset=s3d chunk_n=2 nchunks_actual=2 chunk_elems=62500000 chunk_bytes=500000000
+  s3d            sz3_1e3          N=2     r=0 C=  2.12 W=  2518.53 F=    0.05 S=   42.43 X=   0.26 S2=  26.10 | E=  1.26 O=  0.34 R=   924.48 ms  ratio=19136.56x  file=0.1 MiB  RMSE=1.247e-04 maxae=1.000e-03
+CHUNKINFO dataset=s3d chunk_n=2 nchunks_actual=2 chunk_elems=62500000 chunk_bytes=500000000
+  s3d            zfp_cpu_r8       N=2     r=0 C=  2.10 W=  4850.37 F=    0.12 S=   50.68 X=   0.17 S2=  56.46 | E=  1.24 O=  0.35 R=  2319.77 ms  ratio=   8.00x  file=119.2 MiB  RMSE=1.568e-09 maxae=1.264e-07
+CHUNKINFO dataset=s3d chunk_n=2 nchunks_actual=2 chunk_elems=62500000 chunk_bytes=500000000
+  s3d            szx_1e3          N=2     r=0 C=  8.27 W=   461.25 F=    0.07 S=   62.48 X=   0.11 S2=  68.30 | E=  1.06 O=  0.22 R=   764.30 ms  ratio=  26.12x  file=36.5 MiB  RMSE=3.308e-04 maxae=1.000e-03
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60312/results_h5zcomp_decouple_group_N2_s3d.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60312/results_ext_decouple_group_N2_s3d.csv (4 run, 0 failed configuration(s) recorded, 0 codec skip(s))

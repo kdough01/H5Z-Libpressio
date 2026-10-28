@@ -1,0 +1,12 @@
+[h5zcomp] mode: arm=hostsim path=chunk group=- progressive=-
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=32 reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=ocean_temp chunk_n=32 nchunks_actual=48 chunk_elems=672520 chunk_bytes=2690080
+  ocean_temp     cuszp_1e3        N=32    r=0 C=  0.70 W=   201.73 F=    6.12 S=   63.40 X=   0.14 S2=  37.53 | E=  1.16 O=  0.25 R=   158.10 ms  ratio=   3.71x  file=33.2 MiB  RMSE=5.773e-04 maxae=1.000e-03
+CHUNKINFO dataset=ocean_temp chunk_n=32 nchunks_actual=48 chunk_elems=672520 chunk_bytes=2690080
+  ocean_temp     sz3_1e3          N=32    r=0 C=  2.09 W=  1021.96 F=   58.95 S=   51.51 X=   0.15 S2=  46.37 | E=  2.10 O=  0.25 R=   650.45 ms  ratio=   6.21x  file=19.8 MiB  RMSE=5.652e-04 maxae=1.002e-03
+CHUNKINFO dataset=ocean_temp chunk_n=32 nchunks_actual=48 chunk_elems=672520 chunk_bytes=2690080
+  ocean_temp     zfp_cpu_r8       N=32    r=0 C=  2.19 W=   833.53 F=   52.48 S=   88.09 X=   0.13 S2=  57.70 | E=  1.13 O=  0.25 R=   727.55 ms  ratio=   3.40x  file=36.2 MiB  RMSE=7.535e-04 maxae=7.246e-02
+CHUNKINFO dataset=ocean_temp chunk_n=32 nchunks_actual=48 chunk_elems=672520 chunk_bytes=2690080
+  ocean_temp     szx_1e3          N=32    r=0 C=  2.94 W=   315.80 F=   17.69 S=   49.65 X=   0.13 S2=  44.76 | E=  1.14 O=  0.28 R=   192.00 ms  ratio=   2.35x  file=52.3 MiB  RMSE=1.915e-04 maxae=4.883e-04
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60313/results_h5zcomp_decouple_chunk_N32_ocean_temp.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60313/results_ext_decouple_chunk_N32_ocean_temp.csv (4 run, 0 failed configuration(s) recorded, 0 codec skip(s))

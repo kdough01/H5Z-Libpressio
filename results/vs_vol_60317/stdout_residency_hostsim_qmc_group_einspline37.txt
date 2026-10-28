@@ -1,0 +1,124 @@
+[h5zcomp] mode: arm=hostsim path=chunk group=all progressive=-
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=4 reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=einspline37 chunk_n=4 nchunks_actual=4 chunk_elems=847553220 chunk_bytes=3390212880
+[FAIL] einspline37/cuszp_1e3 maxae=4.917815e+01 exceeds 2x bound 1.000000e-03
+  einspline37    cuszp_1e3        N=4     r=0 C=  1.16 W=  4687.44 F=    0.19 S=   21.69 X=   0.17 S2=  75.52 | E=  0.23 O=  0.48 R= 15494.57 ms  ratio=   5.26x  file=2459.5 MiB  RMSE=4.529e-01 maxae=4.918e+01
+CHUNKINFO dataset=einspline37 chunk_n=4 nchunks_actual=4 chunk_elems=847553220 chunk_bytes=3390212880
+[H5Z_comp] exception: std::bad_alloc
+HDF5-DIAG: Error detected in HDF5 (2.3.0):
+  #000: /home/kdougherty/src/hdf5-blob-dset-io/src/H5D.c line 1360 in H5Dwrite(): can't synchronously write data
+    major: Dataset
+    minor: Write failed
+  #001: /home/kdougherty/src/hdf5-blob-dset-io/src/H5D.c line 1307 in H5D__write_api_common(): can't write data
+    major: Dataset
+    minor: Write failed
+  #002: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLcallback.c line 2340 in H5VL_dataset_write(): dataset write failed
+    major: Virtual Object Layer
+    minor: Write failed
+  #003: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLcallback.c line 2296 in H5VL__dataset_write(): dataset write failed
+    major: Virtual Object Layer
+    minor: Write failed
+  #004: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLnative_dataset.c line 433 in H5VL__native_dataset_write(): filter's dataset-level write failed
+    major: Dataset
+    minor: Write failed
+  #005: /home/kdougherty/src/hdf5-blob-dset-io/src/H5Dint.c line 3513 in H5D__filter_dset_io(): dataset-level callback of filter 33010 failed
+    major: Data filters
+    minor: Write failed
+[ERR] H5Dwrite einspline37/cuszp_1e6
+[RECORDED FAILURE] einspline37/cuszp_1e6 N=4
+CHUNKINFO dataset=einspline37 chunk_n=4 nchunks_actual=4 chunk_elems=847553220 chunk_bytes=3390212880
+setupConst: c_perm_1 : 1 invalid argument
+Encode : 1 invalid argument
+[H5Z_comp] exception: std::bad_alloc
+HDF5-DIAG: Error detected in HDF5 (2.3.0):
+  #000: /home/kdougherty/src/hdf5-blob-dset-io/src/H5D.c line 1360 in H5Dwrite(): can't synchronously write data
+    major: Dataset
+    minor: Write failed
+  #001: /home/kdougherty/src/hdf5-blob-dset-io/src/H5D.c line 1307 in H5D__write_api_common(): can't write data
+    major: Dataset
+    minor: Write failed
+  #002: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLcallback.c line 2340 in H5VL_dataset_write(): dataset write failed
+    major: Virtual Object Layer
+    minor: Write failed
+  #003: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLcallback.c line 2296 in H5VL__dataset_write(): dataset write failed
+    major: Virtual Object Layer
+    minor: Write failed
+  #004: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLnative_dataset.c line 433 in H5VL__native_dataset_write(): filter's dataset-level write failed
+    major: Dataset
+    minor: Write failed
+  #005: /home/kdougherty/src/hdf5-blob-dset-io/src/H5Dint.c line 3513 in H5D__filter_dset_io(): dataset-level callback of filter 33010 failed
+    major: Data filters
+    minor: Write failed
+[ERR] H5Dwrite einspline37/zfp_gpu_r4
+[RECORDED FAILURE] einspline37/zfp_gpu_r4 N=4
+CHUNKINFO dataset=einspline37 chunk_n=4 nchunks_actual=4 chunk_elems=847553220 chunk_bytes=3390212880
+[H5Z_comp] exception: std::bad_alloc
+HDF5-DIAG: Error detected in HDF5 (2.3.0):
+  #000: /home/kdougherty/src/hdf5-blob-dset-io/src/H5D.c line 1360 in H5Dwrite(): can't synchronously write data
+    major: Dataset
+    minor: Write failed
+  #001: /home/kdougherty/src/hdf5-blob-dset-io/src/H5D.c line 1307 in H5D__write_api_common(): can't write data
+    major: Dataset
+    minor: Write failed
+  #002: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLcallback.c line 2340 in H5VL_dataset_write(): dataset write failed
+    major: Virtual Object Layer
+    minor: Write failed
+  #003: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLcallback.c line 2296 in H5VL__dataset_write(): dataset write failed
+    major: Virtual Object Layer
+    minor: Write failed
+  #004: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLnative_dataset.c line 433 in H5VL__native_dataset_write(): filter's dataset-level write failed
+    major: Dataset
+    minor: Write failed
+  #005: /home/kdougherty/src/hdf5-blob-dset-io/src/H5Dint.c line 3513 in H5D__filter_dset_io(): dataset-level callback of filter 33010 failed
+    major: Data filters
+    minor: Write failed
+[ERR] H5Dwrite einspline37/zfp_gpu_r8
+[RECORDED FAILURE] einspline37/zfp_gpu_r8 N=4
+CHUNKINFO dataset=einspline37 chunk_n=4 nchunks_actual=4 chunk_elems=847553220 chunk_bytes=3390212880
+[H5Z_comp] exception: std::bad_alloc
+HDF5-DIAG: Error detected in HDF5 (2.3.0):
+  #000: /home/kdougherty/src/hdf5-blob-dset-io/src/H5D.c line 1360 in H5Dwrite(): can't synchronously write data
+    major: Dataset
+    minor: Write failed
+  #001: /home/kdougherty/src/hdf5-blob-dset-io/src/H5D.c line 1307 in H5D__write_api_common(): can't write data
+    major: Dataset
+    minor: Write failed
+  #002: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLcallback.c line 2340 in H5VL_dataset_write(): dataset write failed
+    major: Virtual Object Layer
+    minor: Write failed
+  #003: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLcallback.c line 2296 in H5VL__dataset_write(): dataset write failed
+    major: Virtual Object Layer
+    minor: Write failed
+  #004: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLnative_dataset.c line 433 in H5VL__native_dataset_write(): filter's dataset-level write failed
+    major: Dataset
+    minor: Write failed
+  #005: /home/kdougherty/src/hdf5-blob-dset-io/src/H5Dint.c line 3513 in H5D__filter_dset_io(): dataset-level callback of filter 33010 failed
+    major: Data filters
+    minor: Write failed
+[ERR] H5Dwrite einspline37/zfp_gpu_r12
+[RECORDED FAILURE] einspline37/zfp_gpu_r12 N=4
+CHUNKINFO dataset=einspline37 chunk_n=4 nchunks_actual=4 chunk_elems=847553220 chunk_bytes=3390212880
+[H5Z_comp] exception: std::bad_alloc
+HDF5-DIAG: Error detected in HDF5 (2.3.0):
+  #000: /home/kdougherty/src/hdf5-blob-dset-io/src/H5D.c line 1360 in H5Dwrite(): can't synchronously write data
+    major: Dataset
+    minor: Write failed
+  #001: /home/kdougherty/src/hdf5-blob-dset-io/src/H5D.c line 1307 in H5D__write_api_common(): can't write data
+    major: Dataset
+    minor: Write failed
+  #002: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLcallback.c line 2340 in H5VL_dataset_write(): dataset write failed
+    major: Virtual Object Layer
+    minor: Write failed
+  #003: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLcallback.c line 2296 in H5VL__dataset_write(): dataset write failed
+    major: Virtual Object Layer
+    minor: Write failed
+  #004: /home/kdougherty/src/hdf5-blob-dset-io/src/H5VLnative_dataset.c line 433 in H5VL__native_dataset_write(): filter's dataset-level write failed
+    major: Dataset
+    minor: Write failed
+  #005: /home/kdougherty/src/hdf5-blob-dset-io/src/H5Dint.c line 3513 in H5D__filter_dset_io(): dataset-level callback of filter 33010 failed
+    major: Data filters
+    minor: Write failed
+[ERR] H5Dwrite einspline37/zfp_gpu_r16
+[RECORDED FAILURE] einspline37/zfp_gpu_r16 N=4
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60317/results_h5zcomp_residency_hostsim_qmc_group_einspline37.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60317/results_ext_residency_hostsim_qmc_group_einspline37.csv (6 run, 5 failed configuration(s) recorded, 0 codec skip(s))

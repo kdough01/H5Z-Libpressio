@@ -1,0 +1,7 @@
+H5Z-Libpressio b8e31aaa147c0c512907c39c9c7d14806db0675f Remove VOL-comparison results before clean rerun
+9ba86db759d326f3e741e83915cb5d58d7293a03 Add dataset-level transfer callbacks to H5Z_class3_t (dset_write/dset_read)
+host gpu3  phases: decouple
+NVIDIA A100-SXM4-40GB, 580.95.05
+BENCH_ONLY=einspline37
+BENCH_DATA_ROOT=/lcrc/project/ECP-EZ/public/compression
+BENCH_ALLOC=incr

@@ -1,0 +1,17 @@
+[h5zcomp] mode: arm=rtrip path=chunk group=- progressive=-
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=per-entry (vol:chunk_n, default 1) reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=scale-T chunk_n=1 nchunks_actual=1 chunk_elems=141120000 chunk_bytes=564480000
+  scale-T        cuszp_1e3        N=1     r=0 C=  1.25 W=   828.88 F=    0.12 S=   56.07 X=   0.22 S2=  74.76 | E=  1.18 O=  0.30 R=   790.02 ms  ratio=  12.45x  file=43.2 MiB  RMSE=5.774e-04 maxae=1.000e-03 (log-space)
+CHUNKINFO dataset=scale-T chunk_n=1 nchunks_actual=1 chunk_elems=141120000 chunk_bytes=564480000
+  scale-T        cuszp_1e6        N=1     r=0 C=  2.86 W=   996.18 F=    0.07 S=   94.03 X=   0.18 S2=  62.55 | E=  0.19 O=  0.26 R=   894.53 ms  ratio=   3.31x  file=162.7 MiB  RMSE=6.264e-07 maxae=1.431e-06 (log-space)
+CHUNKINFO dataset=scale-T chunk_n=1 nchunks_actual=1 chunk_elems=141120000 chunk_bytes=564480000
+[H5Z_comp] zfp CUDA reported 9000000 B for a fixed-rate stream of 72000000 B; storing the full stream (zfp CUDA size bug workaround, H5ZCOMP_NO_ZFP_CUDA_FIX=1 disables)
+  scale-T        zfp_gpu_r4       N=1     r=0 C=  7.25 W=   875.16 F=    0.07 S=   58.08 X=   0.19 S2=  41.78 | E=  1.12 O=  0.38 R=   704.47 ms  ratio=   7.84x  file=68.7 MiB  RMSE=2.434e-05 maxae=1.459e-03 (log-space)
+CHUNKINFO dataset=scale-T chunk_n=1 nchunks_actual=1 chunk_elems=141120000 chunk_bytes=564480000
+  scale-T        zfp_gpu_r8       N=1     r=0 C=  3.75 W=  1010.39 F=    0.08 S=   41.32 X=   0.18 S2=  55.06 | E=  0.19 O=  0.36 R=   749.50 ms  ratio=   3.92x  file=137.3 MiB  RMSE=1.732e-06 maxae=1.001e-04 (log-space)
+CHUNKINFO dataset=scale-T chunk_n=1 nchunks_actual=1 chunk_elems=141120000 chunk_bytes=564480000
+  scale-T        zfp_gpu_r12      N=1     r=0 C=  1.92 W=  1173.39 F=    0.07 S=   53.89 X=   0.11 S2=  85.94 | E=  1.04 O=  0.46 R=   788.51 ms  ratio=   2.61x  file=206.0 MiB  RMSE=1.086e-07 maxae=6.199e-06 (log-space)
+CHUNKINFO dataset=scale-T chunk_n=1 nchunks_actual=1 chunk_elems=141120000 chunk_bytes=564480000
+  scale-T        zfp_gpu_r16      N=1     r=0 C=  7.91 W=  1319.04 F=    0.08 S=   42.35 X=   0.12 S2=  39.12 | E=  1.14 O=  0.26 R=   821.96 ms  ratio=   1.96x  file=274.7 MiB  RMSE=5.521e+00 maxae=5.755e+00 (log-space)
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60315/results_h5zcomp_residency_rtrip_scale-T.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60315/results_ext_residency_rtrip_scale-T.csv (6 run, 0 failed configuration(s) recorded, 0 codec skip(s))

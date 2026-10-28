@@ -1,0 +1,12 @@
+[h5zcomp] mode: arm=hostsim path=chunk group=- progressive=-
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=8 reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        cuszp_1e3        N=8     r=0 C=  1.14 W=   241.48 F=    0.08 S=   52.44 X=   0.23 S2=  64.44 | E=  0.22 O=  0.28 R=   456.14 ms  ratio=  21.06x  file=13.7 MiB  RMSE=2.720e-04 maxae=1.000e-03
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        sz3_1e3          N=8     r=0 C=  2.24 W=  1015.67 F=    0.09 S=   53.09 X=   0.23 S2=  42.39 | E=  0.19 O=  0.22 R=   403.28 ms  ratio= 159.59x  file=1.8 MiB  RMSE=2.790e-04 maxae=1.000e-03
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        zfp_cpu_r8       N=8     r=0 C=  1.98 W=  1712.02 F=    0.07 S=   51.72 X=   0.20 S2=  73.05 | E=  1.06 O=  0.34 R=   759.70 ms  ratio=   8.00x  file=36.0 MiB  RMSE=6.719e-06 maxae=6.823e-04
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        szx_1e3          N=8     r=0 C=  1.86 W=   282.46 F=    0.05 S=   43.03 X=   0.21 S2=  80.60 | E=  1.06 O=  0.23 R=   414.27 ms  ratio=  21.51x  file=13.4 MiB  RMSE=2.544e-04 maxae=9.998e-04
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60312/results_h5zcomp_decouple_chunk_N8_miranda.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60312/results_ext_decouple_chunk_N8_miranda.csv (4 run, 0 failed configuration(s) recorded, 0 codec skip(s))

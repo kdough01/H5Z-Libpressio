@@ -1,0 +1,17 @@
+[h5zcomp] mode: arm=devres path=chunk group=- progressive=-
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=per-entry (vol:chunk_n, default 1) reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=nyx_baryon chunk_n=1 nchunks_actual=1 chunk_elems=134217728 chunk_bytes=536870912
+  nyx_baryon     cuszp_1e3        N=1     r=0 C=  0.98 W=   150.84 F=    0.11 S=   77.07 X=   0.19 S2=  72.77 | E=  1.05 O=  0.26 R=   854.80 ms  ratio=   4.29x  file=119.3 MiB  RMSE=5.773e-04 maxae=1.000e-03 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=1 nchunks_actual=1 chunk_elems=134217728 chunk_bytes=536870912
+  nyx_baryon     cuszp_1e6        N=1     r=0 C=  6.72 W=   297.69 F=    0.08 S=   41.46 X=   0.18 S2=  73.10 | E=  1.23 O=  0.27 R=  1020.09 ms  ratio=   1.80x  file=284.2 MiB  RMSE=5.784e-07 maxae=1.907e-06 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=1 nchunks_actual=1 chunk_elems=134217728 chunk_bytes=536870912
+[H5Z_comp] zfp CUDA reported 8388608 B for a fixed-rate stream of 67108864 B; storing the full stream (zfp CUDA size bug workaround, H5ZCOMP_NO_ZFP_CUDA_FIX=1 disables)
+  nyx_baryon     zfp_gpu_r4       N=1     r=0 C=  8.90 W=   150.59 F=    0.07 S=   52.48 X=   0.28 S2=  19.49 | E=  1.15 O=  0.26 R=   686.80 ms  ratio=   8.00x  file=64.0 MiB  RMSE=3.991e-03 maxae=3.861e-01 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=1 nchunks_actual=1 chunk_elems=134217728 chunk_bytes=536870912
+  nyx_baryon     zfp_gpu_r8       N=1     r=0 C=  4.37 W=   202.47 F=    0.07 S=   59.10 X=   0.20 S2=  35.06 | E=  1.13 O=  0.44 R=  1247.25 ms  ratio=   4.00x  file=128.0 MiB  RMSE=2.611e-04 maxae=2.497e-02 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=1 nchunks_actual=1 chunk_elems=134217728 chunk_bytes=536870912
+  nyx_baryon     zfp_gpu_r12      N=1     r=0 C=  2.14 W=   303.32 F=    0.07 S=   44.95 X=   0.14 S2=  21.98 | E=  2.10 O=  0.26 R=   727.00 ms  ratio=   2.67x  file=192.0 MiB  RMSE=1.632e-05 maxae=1.528e-03 (log-space)
+CHUNKINFO dataset=nyx_baryon chunk_n=1 nchunks_actual=1 chunk_elems=134217728 chunk_bytes=536870912
+  nyx_baryon     zfp_gpu_r16      N=1     r=0 C= 10.80 W=   373.71 F=    0.08 S=  178.53 X=   0.13 S2=   6.99 | E=  1.12 O=  0.25 R=   777.80 ms  ratio=   2.00x  file=256.0 MiB  RMSE=1.020e-06 maxae=1.040e-04 (log-space)
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60316/results_h5zcomp_residency_devres_nyx_baryon.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60316/results_ext_residency_devres_nyx_baryon.csv (6 run, 0 failed configuration(s) recorded, 0 codec skip(s))

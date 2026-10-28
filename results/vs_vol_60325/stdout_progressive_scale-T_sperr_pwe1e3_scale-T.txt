@@ -1,0 +1,28 @@
+[h5zcomp] mode: arm=hostsim path=chunk group=all progressive=5,10,25,50,75,100
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=98 reps=3
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=scale-T chunk_n=98 nchunks_actual=98 chunk_elems=1440000 chunk_bytes=5760000
+  scale-T        sperr_pwe1e3     N=98    r=0 C=  8.16 W= 11120.50 F=    0.10 S=   43.86 X=   0.29 S2=  40.42 | E=  1.23 O=  0.44 R=  5101.26 ms  ratio= 355.64x  file=1.5 MiB  RMSE=1.085e-04 maxae=9.999e-04 (log-space)
+  progressive scale-T      sperr_pwe1e3     5%  chunks=5  bytes=80985/1587238  R=  4317.14 ms  RMSE=6.120e-04 maxae=1.503e-02
+  progressive scale-T      sperr_pwe1e3    10%  chunks=10  bytes=161970/1587238  R=  4356.77 ms  RMSE=4.289e-04 maxae=1.077e-02
+  progressive scale-T      sperr_pwe1e3    25%  chunks=25  bytes=404925/1587238  R=  4602.86 ms  RMSE=2.602e-04 maxae=8.203e-03
+  progressive scale-T      sperr_pwe1e3    50%  chunks=49  bytes=793653/1587238  R=  4549.51 ms  RMSE=1.793e-04 maxae=5.612e-03
+  progressive scale-T      sperr_pwe1e3    75%  chunks=74  bytes=1198578/1587238  R=  4607.77 ms  RMSE=1.446e-04 maxae=4.693e-03
+  progressive scale-T      sperr_pwe1e3   100%  chunks=98  bytes=1587238/1587238  R=  4906.20 ms  RMSE=1.085e-04 maxae=9.999e-04
+CHUNKINFO dataset=scale-T chunk_n=98 nchunks_actual=98 chunk_elems=1440000 chunk_bytes=5760000
+  scale-T        sperr_pwe1e3     N=98    r=1 C=  2.28 W= 10211.45 F=    0.07 S=   45.53 X=   0.32 S2=  39.99 | E=  3.59 O=  0.59 R=  4915.75 ms  ratio= 355.64x  file=1.5 MiB  RMSE=1.085e-04 maxae=9.999e-04 (log-space)
+  progressive scale-T      sperr_pwe1e3     5%  chunks=5  bytes=80985/1587238  R=  4326.27 ms  RMSE=6.120e-04 maxae=1.503e-02
+  progressive scale-T      sperr_pwe1e3    10%  chunks=10  bytes=161970/1587238  R=  4277.99 ms  RMSE=4.289e-04 maxae=1.077e-02
+  progressive scale-T      sperr_pwe1e3    25%  chunks=25  bytes=404925/1587238  R=  4376.05 ms  RMSE=2.602e-04 maxae=8.203e-03
+  progressive scale-T      sperr_pwe1e3    50%  chunks=49  bytes=793653/1587238  R=  4499.04 ms  RMSE=1.793e-04 maxae=5.612e-03
+  progressive scale-T      sperr_pwe1e3    75%  chunks=74  bytes=1198578/1587238  R=  4572.18 ms  RMSE=1.446e-04 maxae=4.693e-03
+  progressive scale-T      sperr_pwe1e3   100%  chunks=98  bytes=1587238/1587238  R=  4830.55 ms  RMSE=1.085e-04 maxae=9.999e-04
+CHUNKINFO dataset=scale-T chunk_n=98 nchunks_actual=98 chunk_elems=1440000 chunk_bytes=5760000
+  scale-T        sperr_pwe1e3     N=98    r=2 C=  3.15 W= 10252.68 F=    0.06 S=   51.69 X=   0.30 S2=  85.46 | E=  1.09 O=  0.39 R=  4804.13 ms  ratio= 355.64x  file=1.5 MiB  RMSE=1.085e-04 maxae=9.999e-04 (log-space)
+  progressive scale-T      sperr_pwe1e3     5%  chunks=5  bytes=80985/1587238  R=  4327.66 ms  RMSE=6.120e-04 maxae=1.503e-02
+  progressive scale-T      sperr_pwe1e3    10%  chunks=10  bytes=161970/1587238  R=  4415.37 ms  RMSE=4.289e-04 maxae=1.077e-02
+  progressive scale-T      sperr_pwe1e3    25%  chunks=25  bytes=404925/1587238  R=  4392.73 ms  RMSE=2.602e-04 maxae=8.203e-03
+  progressive scale-T      sperr_pwe1e3    50%  chunks=49  bytes=793653/1587238  R=  4451.56 ms  RMSE=1.793e-04 maxae=5.612e-03
+  progressive scale-T      sperr_pwe1e3    75%  chunks=74  bytes=1198578/1587238  R=  4574.53 ms  RMSE=1.446e-04 maxae=4.693e-03
+  progressive scale-T      sperr_pwe1e3   100%  chunks=98  bytes=1587238/1587238  R=  4732.31 ms  RMSE=1.085e-04 maxae=9.999e-04
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60325/results_h5zcomp_progressive_scale-T_sperr_pwe1e3_scale-T.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60325/results_ext_progressive_scale-T_sperr_pwe1e3_scale-T.csv (3 run, 0 failed configuration(s) recorded, 0 codec skip(s))

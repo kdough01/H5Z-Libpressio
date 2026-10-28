@@ -1,0 +1,13 @@
+[h5zcomp] mode: arm=hostsim path=chunk group=- progressive=-
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=8 reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=scale-T chunk_n=8 nchunks_actual=8 chunk_elems=18720000 chunk_bytes=74880000
+[FAIL] scale-T/cuszp_1e3 maxae=5.531715e+00 exceeds 2x bound 1.000000e-03
+  scale-T        cuszp_1e3        N=8     r=0 C=  1.21 W=   530.30 F=    0.11 S=   60.31 X=   0.25 S2= 109.62 | E=  1.39 O=  0.28 R=   834.94 ms  ratio=  12.37x  file=43.5 MiB  RMSE=8.419e-02 maxae=5.532e+00 (log-space)
+CHUNKINFO dataset=scale-T chunk_n=8 nchunks_actual=8 chunk_elems=18720000 chunk_bytes=74880000
+  scale-T        sz3_1e3          N=8     r=0 C=  2.95 W=  3584.60 F=    0.05 S=   64.73 X=   0.56 S2=  57.65 | E=  1.23 O=  0.35 R=  1211.59 ms  ratio= 191.72x  file=2.8 MiB  RMSE=4.053e-04 maxae=1.001e-03 (log-space)
+CHUNKINFO dataset=scale-T chunk_n=8 nchunks_actual=8 chunk_elems=18720000 chunk_bytes=74880000
+  scale-T        zfp_cpu_r8       N=8     r=0 C=  2.04 W=  5553.76 F=    0.10 S=   52.56 X=   0.17 S2=  64.61 | E=  1.27 O=  0.35 R=  2654.91 ms  ratio=   3.06x  file=175.8 MiB  RMSE=8.839e-06 maxae=8.526e-04 (log-space)
+CHUNKINFO dataset=scale-T chunk_n=8 nchunks_actual=8 chunk_elems=18720000 chunk_bytes=74880000
+  scale-T        szx_1e3          N=8     r=0 C=  9.09 W=  1462.23 F=    0.09 S=   47.88 X=   0.11 S2=  60.51 | E=  1.19 O=  0.24 R=  1291.37 ms  ratio=   5.31x  file=101.3 MiB  RMSE=2.135e-04 maxae=9.999e-04 (log-space)
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60312/results_h5zcomp_decouple_chunk_N8_scale-T.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60312/results_ext_decouple_chunk_N8_scale-T.csv (4 run, 0 failed configuration(s) recorded, 0 codec skip(s))

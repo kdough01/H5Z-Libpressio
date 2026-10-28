@@ -1,0 +1,8 @@
+[h5zcomp] mode: arm=hostsim path=chunk group=- progressive=-
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=2 reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+[skip] einspline37/cuszp_1e3 N=2: one chunk would be 6.31 GiB (HDF5 limit 4 GiB) -- recorded as rep=-1 without loading the data (use --group all to store it)
+[skip] einspline37/sz3_1e3 N=2: one chunk would be 6.31 GiB (HDF5 limit 4 GiB) -- recorded as rep=-1 without loading the data (use --group all to store it)
+[skip] einspline37/zfp_cpu_r8 N=2: one chunk would be 6.31 GiB (HDF5 limit 4 GiB) -- recorded as rep=-1 without loading the data (use --group all to store it)
+[skip] einspline37/szx_1e3 N=2: one chunk would be 6.31 GiB (HDF5 limit 4 GiB) -- recorded as rep=-1 without loading the data (use --group all to store it)
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60314/results_h5zcomp_decouple_chunk_N2_einspline37.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60314/results_ext_decouple_chunk_N2_einspline37.csv (4 run, 4 failed configuration(s) recorded, 0 codec skip(s))
