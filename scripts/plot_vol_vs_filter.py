@@ -747,9 +747,9 @@ def figure_guide(S, vol_prog, filt_prog, made):
 
 
 FAIL_NOTE = (
-    "einspline37 at N=1 is expected to fail: the whole dataset as one HDF5 chunk is over the 4 GiB "
-    "chunk limit, so the harness records it and moves on. Any other row here is a real failure; the "
-    "matching `stdout_*` log in the job folder has the error.\n\n")
+    "einspline37 (12.6 GiB) at N=1 and N=2 is expected to fail: one HDF5 chunk would be 12.6 or "
+    "6.3 GiB, over the 4 GiB chunk limit, so the harness records it and moves on. Any other row here "
+    "is a real failure; the matching `stdout_*` log in the job folder has the error.\n\n")
 
 
 # ---------------------------------------------------------------------------

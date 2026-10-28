@@ -6,10 +6,10 @@ Inputs:
 - direct: results/vs_vol_60308, results/vs_vol_60309, results/vs_vol_60310, results/vs_vol_60311
 - group: results/vs_vol_60312, results/vs_vol_60313, results/vs_vol_60314, results/vs_vol_60317
 - prog_write: results/vs_vol_60325
-- vol: /home/kdougherty/hdf5_projs/vol-external-passthrough/tests/results/20260811_140354_52888, /home/kdougherty/hdf5_projs/vol-external-passthrough/tests/results/device_resident_tests
-- VOL progressive: /home/kdougherty/hdf5_projs/vol-external-passthrough/tests/results/prog_20260818_140442_53500
-- VOL progressive: /home/kdougherty/hdf5_projs/vol-external-passthrough/tests/results/prog_20260818_134437_53492
-- VOL progressive: /home/kdougherty/hdf5_projs/vol-external-passthrough/tests/results/prog_20260818_131707_53488
+- vol: ../vol-external-passthrough/tests/results/20260811_140354_52888, ../vol-external-passthrough/tests/results/device_resident_tests
+- VOL progressive: ../vol-external-passthrough/tests/results/prog_20260818_140442_53500
+- VOL progressive: ../vol-external-passthrough/tests/results/prog_20260818_134437_53492
+- VOL progressive: ../vol-external-passthrough/tests/results/prog_20260818_131707_53488
 
 Times are wall clock; write = create+write+flush+sync+close+csync, read = open+read (cold cache). Reps averaged.
 
@@ -543,7 +543,7 @@ If read time barely changes with the percentage, the fixed costs (opening the fi
 
 ## Recorded failures (rep=-1)
 
-einspline37 at N=1 is expected to fail: the whole dataset as one HDF5 chunk is over the 4 GiB chunk limit, so the harness records it and moves on. Any other row here is a real failure; the matching `stdout_*` log in the job folder has the error.
+einspline37 (12.6 GiB) at N=1 and N=2 is expected to fail: one HDF5 chunk would be 12.6 or 6.3 GiB, over the 4 GiB chunk limit, so the harness records it and moves on. Any other row here is a real failure; the matching `stdout_*` log in the job folder has the error.
 
 - chunk: einspline37 cuszp_1e3 N=1 hostsim
 - chunk: einspline37 cuszp_1e3 N=2 hostsim
