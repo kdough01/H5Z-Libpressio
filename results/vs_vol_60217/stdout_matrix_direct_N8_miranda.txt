@@ -1,0 +1,35 @@
+[h5zcomp] mode: arm=hostsim path=direct group=- progressive=-
+[h5zcomp] backend=H5Zcomp filter_id=33010 chunk_n=8 reps=1
+[h5zcomp] durability: fsync=1 sync_dir=1 drop_cache=1 (BENCH_FSYNC / BENCH_SYNC_DIR / BENCH_DROP_CACHE) -- these MUST match the VOL run or the two are not comparable
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        noop             N=8     r=0 C=  1.12 W=   297.32 F=    0.33 S=  271.33 X=   0.16 S2=  26.07 | E=  1.14 O=  0.26 R=   107.80 ms  ratio=   1.00x  file=288.0 MiB  RMSE=0.000e+00 maxae=0.000e+00
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        cuszp_1e3        N=8     r=0 C=  5.60 W=    73.59 F=    0.03 S=   56.87 X=   0.13 S2=  72.75 | E=  2.75 O=  0.31 R=   240.00 ms  ratio=  21.06x  file=13.7 MiB  RMSE=2.720e-04 maxae=1.000e-03
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        cuszp_1e6        N=8     r=0 C=  3.50 W=   118.02 F=    0.06 S=   68.48 X=   0.17 S2=  80.95 | E=  1.22 O=  0.23 R=   256.01 ms  ratio=  11.16x  file=25.8 MiB  RMSE=3.091e-07 maxae=1.000e-06
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        sz3_1e3          N=8     r=0 C=  1.83 W=   836.57 F=    0.06 S=   40.75 X=   0.16 S2=  85.02 | E=  1.31 O=  0.24 R=   260.42 ms  ratio= 159.59x  file=1.8 MiB  RMSE=2.790e-04 maxae=1.000e-03
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        sz3_1e6          N=8     r=0 C=  2.00 W=  1069.56 F=    0.05 S=   35.21 X=   0.23 S2=  57.69 | E=  2.53 O=  0.36 R=   509.25 ms  ratio=  21.44x  file=13.4 MiB  RMSE=3.197e-07 maxae=1.000e-06
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        zfp_cpu_r4       N=8     r=0 C= 14.97 W=  1372.36 F=    0.05 S=   58.35 X=   0.13 S2=  64.81 | E=  1.44 O=  0.43 R=   381.29 ms  ratio=  16.00x  file=18.0 MiB  RMSE=1.323e-04 maxae=1.232e-02
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+[H5Z_comp] zfp CUDA reported 294912 B for a fixed-rate stream of 2359296 B; storing the full stream (zfp CUDA size bug workaround, H5ZCOMP_NO_ZFP_CUDA_FIX=1 disables)
+  miranda        zfp_gpu_r4       N=8     r=0 C=  2.46 W=   142.49 F=    0.05 S=   55.11 X=   0.15 S2=  67.40 | E=  1.29 O=  0.26 R=    95.39 ms  ratio=  16.00x  file=18.0 MiB  RMSE=1.323e-04 maxae=1.232e-02
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        zfp_cpu_r8       N=8     r=0 C=  7.58 W=  1540.44 F=    0.05 S=   57.43 X=   0.12 S2=  78.69 | E=  1.08 O=  0.23 R=   546.17 ms  ratio=   8.00x  file=36.0 MiB  RMSE=6.719e-06 maxae=6.823e-04
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        zfp_gpu_r8       N=8     r=0 C=  2.48 W=   139.63 F=    0.06 S=   46.50 X=   0.45 S2= 131.23 | E=  1.15 O=  0.23 R=   124.04 ms  ratio=   8.00x  file=36.0 MiB  RMSE=6.719e-06 maxae=6.823e-04
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        zfp_cpu_r12      N=8     r=0 C=  3.87 W=  1774.52 F=    0.07 S=   41.51 X=   0.19 S2=  58.27 | E=  4.07 O=  0.44 R=   675.79 ms  ratio=   5.33x  file=54.0 MiB  RMSE=4.241e-07 maxae=4.203e-05
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        zfp_gpu_r12      N=8     r=0 C=  2.19 W=   169.46 F=    0.06 S=  101.56 X=   0.13 S2=  53.70 | E=  1.20 O=  0.23 R=   125.83 ms  ratio=   5.33x  file=54.0 MiB  RMSE=4.241e-07 maxae=4.203e-05
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        zfp_cpu_r16      N=8     r=0 C=  8.02 W=  1881.59 F=    0.05 S=   88.20 X=   0.12 S2=  78.01 | E=  1.20 O=  0.22 R=   794.85 ms  ratio=   4.00x  file=72.0 MiB  RMSE=2.650e-08 maxae=2.833e-06
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        zfp_gpu_r16      N=8     r=0 C=  5.50 W=   144.86 F=    0.06 S=   87.68 X=   0.10 S2=  83.75 | E=  1.47 O=  0.23 R=   108.70 ms  ratio=   4.00x  file=72.0 MiB  RMSE=2.650e-08 maxae=2.833e-06
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        szx_1e3          N=8     r=0 C=  2.27 W=   102.71 F=    0.04 S=   62.75 X=   0.15 S2= 110.38 | E=  1.13 O=  0.23 R=   233.64 ms  ratio=  21.51x  file=13.4 MiB  RMSE=2.544e-04 maxae=9.998e-04
+CHUNKINFO dataset=miranda chunk_n=8 nchunks_actual=8 chunk_elems=4718592 chunk_bytes=37748736
+  miranda        szx_1e6          N=8     r=0 C=  4.74 W=   187.05 F=    0.07 S=   78.38 X=   0.12 S2=  56.52 | E=  1.18 O=  0.25 R=   252.00 ms  ratio=  11.07x  file=26.0 MiB  RMSE=2.751e-07 maxae=1.114e-06
+wrote /home/kdougherty/H5Z-Libpressio/results/vs_vol_60217/results_h5zcomp_matrix_direct_N8_miranda.csv and /home/kdougherty/H5Z-Libpressio/results/vs_vol_60217/results_ext_matrix_direct_N8_miranda.csv (15 run, 0 failed configuration(s) recorded, 0 codec skip(s))
