@@ -5,12 +5,215 @@ Inputs:
 - chunk: results/vs_vol_60217, results/vs_vol_60218, results/vs_vol_60220
 - direct: results/vs_vol_60217, results/vs_vol_60218, results/vs_vol_60220
 - prog_write: results/vs_vol_60222
-- vol: /home/kdougherty/hdf5_projs/vol-external-passthrough/tests/results/20260811_140354_52888, /home/kdougherty/hdf5_projs/vol-external-passthrough/tests/results/device_resident_tests
-- VOL progressive: /home/kdougherty/hdf5_projs/vol-external-passthrough/tests/results/prog_20260818_140442_53500
-- VOL progressive: /home/kdougherty/hdf5_projs/vol-external-passthrough/tests/results/prog_20260818_134437_53492
-- VOL progressive: /home/kdougherty/hdf5_projs/vol-external-passthrough/tests/results/prog_20260818_131707_53488
+- vol: ../vol-external-passthrough/tests/results/20260811_140354_52888, ../vol-external-passthrough/tests/results/device_resident_tests
+- VOL progressive: ../vol-external-passthrough/tests/results/prog_20260818_140442_53500
+- VOL progressive: ../vol-external-passthrough/tests/results/prog_20260818_134437_53492
+- VOL progressive: ../vol-external-passthrough/tests/results/prog_20260818_131707_53488
 
 Times are wall clock; write = create+write+flush+sync+close+csync, read = open+read (cold cache). Reps averaged.
+
+## Figure guide
+
+For each figure written by this run: how to read it, then what this run's numbers show. The numbered sections after this one hold the tables behind each figure.
+
+### Ratio parity  (`1_ratio_parity.png`)
+
+![1_ratio_parity](1_ratio_parity.png)
+
+**How to read it.** Each point is one (dataset, codec) pair compressed as a single unit (N=1). The x axis is the VOL's ratio and the y axis is the filter's. Points on the dashed diagonal mean both produced the same compressed size. Orange is the per-chunk filter path, green the dataset-level path.
+
+**What it shows.**
+
+90 pairs over 3 dataset(s) (miranda, s3d, scale-T). Median deviation 0.00%, worst 0.03% (s3d sz3_1e3, direct path). The filter and the VOL produce the same compressed size, so the time differences in the later figures come from the I/O path, not from compressing differently.
+
+### End-to-end time, filter ÷ VOL  (`2_matrix_time.png`)
+
+![2_matrix_time](2_matrix_time.png)
+
+**How to read it.** Top row N=1, bottom row N=8; left write, right read. Each column is a codec, each dot one dataset, and the bar is the geometric mean over datasets. Below the dashed line at 1 the filter is faster. Write covers create through the final fsync, so codec work done at close is counted. Read is open plus read on a cold cache.
+
+**What it shows.**
+
+- N=1 write: filter, per-chunk path 1.29× overall, faster than the VOL for 0/15 codecs, slowest cuszp_1e3 (1.92×); filter, dataset-level path 0.81× overall, faster than the VOL for 12/15 codecs, slowest sz3_1e3 (1.05×).
+- N=1 read: filter, per-chunk path 2.23× overall, faster than the VOL for 0/15 codecs, slowest cuszp_1e3 (8.89×); filter, dataset-level path 1.27× overall, faster than the VOL for 4/15 codecs, slowest cuszp_1e3 (5.07×).
+- N=8 write: filter, per-chunk path 1.31× overall, faster than the VOL for 0/15 codecs, slowest cuszp_1e3 (1.77×); filter, dataset-level path 0.85× overall, faster than the VOL for 12/15 codecs, slowest sz3_1e3 (1.09×).
+- N=8 read: filter, per-chunk path 2.33× overall, faster than the VOL for 0/15 codecs, slowest cuszp_1e3 (6.81×); filter, dataset-level path 1.21× overall, faster than the VOL for 5/15 codecs, slowest cuszp_1e3 (3.77×).
+
+The GPU codecs are the outliers on reads at N=1 (cuszp_1e3 8.9× per-chunk / 5.1× dataset-level; cuszp_1e6 6.8× per-chunk / 4.2× dataset-level; zfp_gpu_r12 2.8× per-chunk / 0.9× dataset-level; zfp_gpu_r16 2.2× per-chunk / 1.1× dataset-level; zfp_gpu_r4 4.2× per-chunk / 1.1× dataset-level; zfp_gpu_r8 3.1× per-chunk / 0.9× dataset-level). On the per-chunk path the filter receives host buffers from HDF5's chunk pipeline, so the compressed chunk goes to the device and the result comes back for every call. Any remaining gap on the dataset-level path is cost outside that copy.
+
+### Decoupling storage chunks from compression units: sz3_1e3  (`3_decouple_sz3_1e3.png`)
+
+![3_decouple_sz3_1e3](3_decouple_sz3_1e3.png)
+
+**How to read it.** One column per dataset. Top: compression ratio against the number of storage chunks N. Bottom: end-to-end write time. Blue is the VOL, orange the filter compressing each chunk on its own, and green the filter compressing one unit striped over all N chunks ("h5z:group":"all"). A flat green line in the top row means the ratio no longer depends on how the dataset is chunked.
+
+**What it shows.**
+
+Share of the N=1 compression ratio kept as the dataset is split into more storage chunks (100% = no loss from chunking):
+
+- miranda (N=1 ratio 164.6): VOL 89% at N=16, per-chunk 89% at N=16.
+- s3d (N=1 ratio 1.92e+04): VOL 27% at N=16, per-chunk 25% at N=16.
+- scale-T (N=1 ratio 254): VOL 70% at N=16, per-chunk 70% at N=16.
+- NYX baryon (N=1 ratio 7.847): VOL 101% at N=16.
+- ocean temp (N=1 ratio 6.494): VOL 89% at N=16.
+- QMC (einspline37) (N=1 ratio 3.379): VOL 100% at N=16, per-chunk 100% at N=16.
+
+**No group=all rows were loaded**, so this figure only shows how much ratio per-chunk compression gives up. The decouple phase is the one that writes those rows.
+
+### Decoupling storage chunks from compression units: szx_1e3  (`3_decouple_szx_1e3.png`)
+
+![3_decouple_szx_1e3](3_decouple_szx_1e3.png)
+
+**How to read it.** One column per dataset. Top: compression ratio against the number of storage chunks N. Bottom: end-to-end write time. Blue is the VOL, orange the filter compressing each chunk on its own, and green the filter compressing one unit striped over all N chunks ("h5z:group":"all"). A flat green line in the top row means the ratio no longer depends on how the dataset is chunked.
+
+**What it shows.**
+
+Share of the N=1 compression ratio kept as the dataset is split into more storage chunks (100% = no loss from chunking):
+
+- miranda (N=1 ratio 21.51): VOL 100% at N=16, per-chunk 100% at N=16.
+- s3d (N=1 ratio 26.12): VOL 100% at N=16, per-chunk 100% at N=16.
+- scale-T (N=1 ratio 5.327): VOL 100% at N=16, per-chunk 100% at N=16.
+- NYX baryon (N=1 ratio 2.334): VOL 100% at N=16.
+- ocean temp (N=1 ratio 2.354): VOL 100% at N=16.
+- QMC (einspline37) (N=1 ratio 1.601): VOL 100% at N=16, per-chunk 100% at N=16.
+
+**No group=all rows were loaded**, so this figure only shows how much ratio per-chunk compression gives up. The decouple phase is the one that writes those rows.
+
+### Decoupling storage chunks from compression units: zfp_cpu_r8  (`3_decouple_zfp_cpu_r8.png`)
+
+![3_decouple_zfp_cpu_r8](3_decouple_zfp_cpu_r8.png)
+
+**How to read it.** One column per dataset. Top: compression ratio against the number of storage chunks N. Bottom: end-to-end write time. Blue is the VOL, orange the filter compressing each chunk on its own, and green the filter compressing one unit striped over all N chunks ("h5z:group":"all"). A flat green line in the top row means the ratio no longer depends on how the dataset is chunked.
+
+**What it shows.**
+
+Share of the N=1 compression ratio kept as the dataset is split into more storage chunks (100% = no loss from chunking):
+
+- miranda (N=1 ratio 8): VOL 100% at N=16, per-chunk 100% at N=16.
+- s3d (N=1 ratio 8): VOL 100% at N=16, per-chunk 98% at N=16.
+- scale-T (N=1 ratio 3.92): VOL 89% at N=16, per-chunk 89% at N=16.
+- NYX baryon (N=1 ratio 4): VOL 100% at N=16.
+- ocean temp (N=1 ratio 3.778): VOL 50% at N=16.
+- QMC (einspline37) (N=1 ratio 4): VOL 100% at N=16, per-chunk 100% at N=16.
+
+**No group=all rows were loaded**, so this figure only shows how much ratio per-chunk compression gives up. The decouple phase is the one that writes those rows.
+
+### Decoupling storage chunks from compression units: cuszp_1e3  (`3_decouple_cuszp_1e3.png`)
+
+![3_decouple_cuszp_1e3](3_decouple_cuszp_1e3.png)
+
+**How to read it.** One column per dataset. Top: compression ratio against the number of storage chunks N. Bottom: end-to-end write time. Blue is the VOL, orange the filter compressing each chunk on its own, and green the filter compressing one unit striped over all N chunks ("h5z:group":"all"). A flat green line in the top row means the ratio no longer depends on how the dataset is chunked.
+
+**What it shows.**
+
+Share of the N=1 compression ratio kept as the dataset is split into more storage chunks (100% = no loss from chunking):
+
+- miranda (N=1 ratio 21.06): VOL 100% at N=16, per-chunk 100% at N=16.
+- s3d (N=1 ratio 46.22): VOL 100% at N=16, per-chunk 100% at N=16.
+- scale-T (N=1 ratio 12.45): VOL 100% at N=16, per-chunk 100% at N=16.
+- NYX baryon (N=1 ratio 4.293): VOL 100% at N=16.
+- ocean temp (N=1 ratio 3.708): VOL 100% at N=16.
+- QMC (einspline37) (N=1 ratio 5.258): VOL 64% at N=16, per-chunk 64% at N=16.
+
+**No group=all rows were loaded**, so this figure only shows how much ratio per-chunk compression gives up. The decouple phase is the one that writes those rows.
+
+### Where the input buffer lives: cuszp_1e3  (`4_residency_cuszp_1e3.png`)
+
+![4_residency_cuszp_1e3](4_residency_cuszp_1e3.png)
+
+**How to read it.** Write time for the three ways the application can hold its data. In devres the buffer stays on the GPU and is passed through H5Pset_comp_native_buffer. In rtrip the application copies it to the host first. In hostsim it starts on the host. Blue bars are the VOL. The green bar is the filter's native path (devres) and the orange bars its per-chunk path. "n/a" means no row.
+
+**What it shows.**
+
+- miranda: hostsim 2.65× the VOL.
+- s3d: hostsim 2.16× the VOL.
+- scale-T: hostsim 1.24× the VOL.
+
+**No filter devres/rtrip rows were loaded**, so only the hostsim comparison is drawn. The residency phase is the one that writes those rows.
+
+### Where the input buffer lives: cuszp_1e6  (`4_residency_cuszp_1e6.png`)
+
+![4_residency_cuszp_1e6](4_residency_cuszp_1e6.png)
+
+**How to read it.** Write time for the three ways the application can hold its data. In devres the buffer stays on the GPU and is passed through H5Pset_comp_native_buffer. In rtrip the application copies it to the host first. In hostsim it starts on the host. Blue bars are the VOL. The green bar is the filter's native path (devres) and the orange bars its per-chunk path. "n/a" means no row.
+
+**What it shows.**
+
+- miranda: hostsim 1.25× the VOL.
+- s3d: hostsim 1.86× the VOL.
+- scale-T: hostsim 1.55× the VOL.
+
+**No filter devres/rtrip rows were loaded**, so only the hostsim comparison is drawn. The residency phase is the one that writes those rows.
+
+### Where the input buffer lives: zfp_gpu_r12  (`4_residency_zfp_gpu_r12.png`)
+
+![4_residency_zfp_gpu_r12](4_residency_zfp_gpu_r12.png)
+
+**How to read it.** Write time for the three ways the application can hold its data. In devres the buffer stays on the GPU and is passed through H5Pset_comp_native_buffer. In rtrip the application copies it to the host first. In hostsim it starts on the host. Blue bars are the VOL. The green bar is the filter's native path (devres) and the orange bars its per-chunk path. "n/a" means no row.
+
+**What it shows.**
+
+- miranda: hostsim 1.29× the VOL.
+- s3d: hostsim 1.72× the VOL.
+- scale-T: hostsim 1.31× the VOL.
+
+**No filter devres/rtrip rows were loaded**, so only the hostsim comparison is drawn. The residency phase is the one that writes those rows.
+
+### Where the input buffer lives: zfp_gpu_r16  (`4_residency_zfp_gpu_r16.png`)
+
+![4_residency_zfp_gpu_r16](4_residency_zfp_gpu_r16.png)
+
+**How to read it.** Write time for the three ways the application can hold its data. In devres the buffer stays on the GPU and is passed through H5Pset_comp_native_buffer. In rtrip the application copies it to the host first. In hostsim it starts on the host. Blue bars are the VOL. The green bar is the filter's native path (devres) and the orange bars its per-chunk path. "n/a" means no row.
+
+**What it shows.**
+
+- miranda: hostsim 1.26× the VOL.
+- s3d: hostsim 1.69× the VOL.
+- scale-T: hostsim 1.59× the VOL.
+
+**No filter devres/rtrip rows were loaded**, so only the hostsim comparison is drawn. The residency phase is the one that writes those rows.
+
+### Where the input buffer lives: zfp_gpu_r4  (`4_residency_zfp_gpu_r4.png`)
+
+![4_residency_zfp_gpu_r4](4_residency_zfp_gpu_r4.png)
+
+**How to read it.** Write time for the three ways the application can hold its data. In devres the buffer stays on the GPU and is passed through H5Pset_comp_native_buffer. In rtrip the application copies it to the host first. In hostsim it starts on the host. Blue bars are the VOL. The green bar is the filter's native path (devres) and the orange bars its per-chunk path. "n/a" means no row.
+
+**What it shows.**
+
+- miranda: hostsim 1.20× the VOL.
+- s3d: hostsim 1.96× the VOL.
+- scale-T: hostsim 1.60× the VOL.
+
+**No filter devres/rtrip rows were loaded**, so only the hostsim comparison is drawn. The residency phase is the one that writes those rows.
+
+### Where the input buffer lives: zfp_gpu_r8  (`4_residency_zfp_gpu_r8.png`)
+
+![4_residency_zfp_gpu_r8](4_residency_zfp_gpu_r8.png)
+
+**How to read it.** Write time for the three ways the application can hold its data. In devres the buffer stays on the GPU and is passed through H5Pset_comp_native_buffer. In rtrip the application copies it to the host first. In hostsim it starts on the host. Blue bars are the VOL. The green bar is the filter's native path (devres) and the orange bars its per-chunk path. "n/a" means no row.
+
+**What it shows.**
+
+- miranda: hostsim 1.35× the VOL.
+- s3d: hostsim 1.76× the VOL.
+- scale-T: hostsim 1.26× the VOL.
+
+**No filter devres/rtrip rows were loaded**, so only the hostsim comparison is drawn. The residency phase is the one that writes those rows.
+
+### Progressive (truncated) reads  (`5_progressive.png`)
+
+![5_progressive](5_progressive.png)
+
+**How to read it.** One row per (dataset, codec). Left: share of stored bytes actually read against the requested percentage (the dashed diagonal is an exact match). Middle: read time on a cold cache, with the band showing the min–max over reps. Right: RMSE of the reconstruction (log scale). On the left, closer to the diagonal is better; in the middle, lower is faster; on the right, overlapping lines mean the same reconstruction quality at that percentage.
+
+**What it shows.**
+
+- s3d sperr_pwe1e3: largest gap between bytes read and the requested percentage is VOL +5.6 points, filter +0.0 points. RMSE matches the VOL within 1% from 50% upward. Filter read time is 1.34–1.39× the VOL's, and goes from 3925 to 4031 ms between 5% and 100%.
+- s3d sperr_pwe1e6: largest gap between bytes read and the requested percentage is VOL +0.1 points, filter +0.0 points. RMSE matches the VOL within 1% from 25% upward. Filter read time is 1.23–1.28× the VOL's, and goes from 4247 to 4842 ms between 5% and 100%.
+- scale-T sperr_pwe1e3: largest gap between bytes read and the requested percentage is VOL +0.3 points, filter +0.5 points. RMSE matches the VOL within 1% from 5% upward. Filter read time is 1.27–1.35× the VOL's, and goes from 4826 to 5251 ms between 5% and 100%.
+
+If read time barely changes with the percentage, the fixed costs (opening the file, setting up the codec, decoding at least the coarse levels) dominate at these sizes. Truncation is then saving I/O bytes rather than wall time.
 
 ## 1. Ratio parity (N=1)
 
@@ -273,6 +476,8 @@ Times are wall clock; write = create+write+flush+sync+close+csync, read = open+r
 | scale-T | sperr_pwe1e3 | 100 | 100.0% | 100.0% | 4129 | 5251 | 1.085e-04 | 1.085e-04 |
 
 ## Recorded failures (rep=-1)
+
+einspline37 at N=1 is expected to fail: the whole dataset as one HDF5 chunk is over the 4 GiB chunk limit, so the harness records it and moves on. Any other row here is a real failure; the matching `stdout_*` log in the job folder has the error.
 
 - chunk: einspline37 cuszp_1e3 N=1 hostsim
 - chunk: einspline37 cuszp_1e6 N=1 hostsim

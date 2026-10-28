@@ -13,7 +13,8 @@ plot_vol_vs_filter.py -- the VOL experiments vs the same experiments through H5Z
 Every input is optional; a figure is drawn from whatever matches, and a series
 with no data is listed as "not run" in its panel rather than silently missing.
 
-Figures (PNG + PDF), and summary.md with the numbers behind them:
+Figures (PNG + PDF), and summary.md: a figure guide (how to read each figure and
+what this run's numbers show, computed from the rows) followed by the tables:
   1_ratio_parity       filter ratio vs VOL ratio, one compression unit (N=1)
   2_matrix_time        filter / VOL end-to-end write and read time, per codec,
                        N=1 and N=8, per-chunk path vs dataset-level path
@@ -503,6 +504,255 @@ def fig_progressive(vol_prog, filt_prog, out, made, md):
 
 
 # ---------------------------------------------------------------------------
+# figure guide: one entry per figure written -- how to read it and what this
+# run's numbers say. Every claim is computed from the loaded rows, so the text
+# stays right when the inputs change; a series with no rows is called out.
+# ---------------------------------------------------------------------------
+def _rng(xs, fmt="{:.2f}"):
+    xs = [x for x in xs if x is not None]
+    if not xs:
+        return "-"
+    lo, hi = min(xs), max(xs)
+    return fmt.format(lo) if abs(hi - lo) < 1e-9 else f"{fmt.format(lo)}–{fmt.format(hi)}"
+
+
+def _guide_parity(S):
+    dev, n = [], 0
+    for sysname in ("chunk", "direct"):
+        for (s, ds, comp, nn, arm) in S.keys(sysname):
+            if nn == 1 and arm == "hostsim":
+                v, fl = S.get("vol", ds, comp, 1), S.get(sysname, ds, comp, 1)
+                if v and fl:
+                    dev.append((abs(fl / v - 1), sysname, ds, comp))
+    if not dev:
+        return "No (dataset, codec) pair has both a VOL and a filter row at N=1, so nothing is plotted."
+    dev.sort()
+    med, worst = dev[len(dev) // 2][0] * 100, dev[-1]
+    dss = sorted({d[2] for d in dev})
+    verdict = ("The filter and the VOL produce the same compressed size, so the time differences in the "
+               "later figures come from the I/O path, not from compressing differently."
+               if worst[0] < 0.01 else
+               "At least one pair differs by more than 1%: check that codec's options before reading its "
+               "time ratios.")
+    return (f"{len(dev)} pairs over {len(dss)} dataset(s) ({', '.join(dss)}). Median deviation "
+            f"{med:.2f}%, worst {worst[0]*100:.2f}% ({worst[2]} {worst[3]}, {worst[1]} path). {verdict}")
+
+
+def _guide_matrix(S):
+    comps = sorted({k[2] for k in S.keys("vol") if k[4] == "hostsim"})
+    out = []
+    for n in (1, 8):
+        for metric in ("write", "read"):
+            parts = []
+            for sysname in ("chunk", "direct"):
+                per = {}
+                for comp in comps:
+                    vals = []
+                    for ds in {k[1] for k in S.keys("vol") if k[2] == comp}:
+                        v = S.get("vol", ds, comp, n, field=metric)
+                        fl = S.get(sysname, ds, comp, n, field=metric)
+                        if v and fl:
+                            vals.append(fl / v)
+                    if vals:
+                        per[comp] = gmean(vals)
+                if not per:
+                    parts.append(f"{SERIES[sysname]['label']}: no rows")
+                    continue
+                g = gmean(list(per.values()))
+                faster = sum(1 for x in per.values() if x < 1)
+                hi = max(per, key=per.get)
+                parts.append(f"{SERIES[sysname]['label']} {g:.2f}× overall, faster than the VOL for "
+                             f"{faster}/{len(per)} codecs, slowest {hi} ({per[hi]:.2f}×)")
+            out.append(f"- N={n} {metric}: " + "; ".join(parts) + ".")
+    gpu_slow = []
+    for comp in comps:
+        if "cuszp" in comp or "_gpu_" in comp:
+            def r(sysname):
+                vals = [S.get(sysname, ds, comp, 1, field="read") / S.get("vol", ds, comp, 1, field="read")
+                        for ds in {k[1] for k in S.keys("vol") if k[2] == comp}
+                        if S.get(sysname, ds, comp, 1, field="read") and S.get("vol", ds, comp, 1, field="read")]
+                return gmean(vals)
+            c, d = r("chunk"), r("direct")
+            if c and c > 2:
+                gpu_slow.append(f"{comp} {c:.1f}× per-chunk" + (f" / {d:.1f}× dataset-level" if d else ""))
+    tail = ""
+    if gpu_slow:
+        tail = ("\n\nThe GPU codecs are the outliers on reads at N=1 (" + "; ".join(gpu_slow) +
+                "). On the per-chunk path the filter receives host buffers from HDF5's chunk pipeline, so "
+                "the compressed chunk goes to the device and the result comes back for every call. Any "
+                "remaining gap on the dataset-level path is cost outside that copy.")
+    return "\n".join(out) + tail
+
+
+def _guide_decouple(S, comp):
+    lines = []
+    dss = ds_sorted({k[1] for k in S.keys() if k[2] == comp and k[4] == "hostsim"})
+    any_group = False
+    for ds in dss:
+        def at(sysname):
+            ns = sorted(k[3] for k in S.keys(sysname) if k[1] == ds and k[2] == comp and k[4] == "hostsim"
+                        and S.get(sysname, ds, comp, k[3]))
+            return ns
+        base = S.get("chunk", ds, comp, 1) or S.get("vol", ds, comp, 1)
+        if not base:
+            continue
+        bits = []
+        for sysname, lab in (("vol", "VOL"), ("chunk", "per-chunk"), ("group", "group=all")):
+            ns = at(sysname)
+            if not ns or ns[-1] == 1:
+                continue
+            nmax = ns[-1]
+            bits.append(f"{lab} {S.get(sysname, ds, comp, nmax) / base * 100:.0f}% at N={nmax}")
+            any_group |= sysname == "group"
+        if bits:
+            lines.append(f"- {DS_LABEL.get(ds, ds)} (N=1 ratio {base:.4g}): " + ", ".join(bits) + ".")
+    head = ("Share of the N=1 compression ratio kept as the dataset is split into more storage chunks "
+            "(100% = no loss from chunking):\n\n")
+    if not lines:
+        return "No dataset has rows at more than one N for this codec, so there is no trend to read."
+    tail = ("" if any_group else
+            "\n\n**No group=all rows were loaded**, so this figure only shows how much ratio per-chunk "
+            "compression gives up. The decouple phase is the one that writes those rows.")
+    return head + "\n".join(lines) + tail
+
+
+def _guide_residency(S, comp):
+    lines, have_devres = [], False
+    for ds in ds_sorted({k[1] for k in S.keys() if k[2] == comp and k[4] in ARMS}):
+        fl = {a: arm_write(S, "filter", ds, comp, a) for a in ARMS}
+        v = {a: arm_write(S, "vol", ds, comp, a) for a in ARMS}
+        if not any(fl.values()):
+            continue
+        bits = []
+        if fl["devres"]:
+            have_devres = True
+            others = [a for a in ("rtrip", "hostsim") if fl[a]]
+            if others:
+                best = min(others, key=lambda a: fl[a])
+                bits.append(f"devres {fl['devres']:.0f} ms vs {best} {fl[best]:.0f} ms "
+                            f"({fl[best] / fl['devres']:.2f}× slower without the native buffer)")
+            if v["devres"]:
+                bits.append(f"filter devres / VOL devres {fl['devres'] / v['devres']:.2f}×")
+        else:
+            got = [f"{a} {fl[a] / v[a]:.2f}× the VOL" for a in ARMS if fl[a] and v[a]]
+            bits.append(", ".join(got) if got else "no arm with both sides")
+        lines.append(f"- {DS_LABEL.get(ds, ds)}: " + "; ".join(bits) + ".")
+    if not lines:
+        return "No filter rows for this codec, so only the VOL bars are drawn."
+    tail = ("" if have_devres else
+            "\n\n**No filter devres/rtrip rows were loaded**, so only the hostsim comparison is drawn. "
+            "The residency phase is the one that writes those rows.")
+    return "\n".join(lines) + tail
+
+
+def _guide_progressive(vol_prog, filt_prog):
+    lines = []
+    for key in sorted(set(vol_prog) & set(filt_prog), key=lambda k: (k[0] or "", k[1] or "")):
+        def agg(src, p, col):
+            return mean([f(r[col]) for r in src[key][p]])
+        pcts = sorted(set(vol_prog[key]) & set(filt_prog[key]))
+        if not pcts:
+            continue
+        over = {}
+        for name, src in (("VOL", vol_prog), ("filter", filt_prog)):
+            ex = []
+            for p in pcts:
+                b, s = agg(src, p, "bytes_read"), agg(src, p, "stored_bytes")
+                if b and s:
+                    ex.append(100 * b / s - p)
+            over[name] = max(ex, key=abs) if ex else None
+        same = [p for p in pcts
+                if agg(vol_prog, p, "rmse") and agg(filt_prog, p, "rmse")
+                and abs(agg(filt_prog, p, "rmse") / agg(vol_prog, p, "rmse") - 1) < 0.01]
+        tr = [agg(filt_prog, p, "read_wall_ms") / agg(vol_prog, p, "read_wall_ms") for p in pcts
+              if agg(filt_prog, p, "read_wall_ms") and agg(vol_prog, p, "read_wall_ms")]
+        t_lo = agg(filt_prog, pcts[0], "read_wall_ms")
+        t_hi = agg(filt_prog, pcts[-1], "read_wall_ms")
+        fmt_over = lambda x: "-" if x is None else f"{x:+.1f} points"
+        lines.append(
+            f"- {DS_LABEL.get(key[0], key[0])} {key[1]}: largest gap between bytes read and the requested "
+            f"percentage is VOL {fmt_over(over['VOL'])}, filter {fmt_over(over['filter'])}. "
+            f"RMSE matches the VOL within 1% "
+            + (f"from {min(same)}% upward" if same and all(p in same for p in pcts if p >= min(same))
+               else f"at {', '.join(map(str, same))}%" if same else "at no percentage")
+            + f". Filter read time is {_rng(tr)}× the VOL's"
+            + (f", and goes from {t_lo:.0f} to {t_hi:.0f} ms between {pcts[0]}% and {pcts[-1]}%"
+               if t_lo and t_hi else "") + ".")
+    if not lines:
+        return "No (dataset, codec) has both a VOL and a filter progressive run."
+    return ("\n".join(lines) +
+            "\n\nIf read time barely changes with the percentage, the fixed costs (opening the file, "
+            "setting up the codec, decoding at least the coarse levels) dominate at these sizes. "
+            "Truncation is then saving I/O bytes rather than wall time.")
+
+
+GUIDE_TEXT = {
+    "1_ratio_parity": (
+        "Ratio parity",
+        "Each point is one (dataset, codec) pair compressed as a single unit (N=1). The x axis is the "
+        "VOL's ratio and the y axis is the filter's. Points on the dashed diagonal mean both "
+        "produced the same compressed size. Orange is the per-chunk filter path, green the dataset-level path."),
+    "2_matrix_time": (
+        "End-to-end time, filter ÷ VOL",
+        "Top row N=1, bottom row N=8; left write, right read. Each column is a codec, each dot one "
+        "dataset, and the bar is the geometric mean over datasets. Below the dashed line at 1 the filter "
+        "is faster. Write covers create through the final fsync, so codec work done at close is counted. "
+        "Read is open plus read on a cold cache."),
+    "3_decouple": (
+        "Decoupling storage chunks from compression units",
+        "One column per dataset. Top: compression ratio against the number of storage chunks N. Bottom: "
+        "end-to-end write time. Blue is the VOL, orange the filter compressing each chunk on its own, and "
+        "green the filter compressing one unit striped over all N chunks (\"h5z:group\":\"all\"). A flat "
+        "green line in the top row means the ratio no longer depends on how the dataset is chunked."),
+    "4_residency": (
+        "Where the input buffer lives",
+        "Write time for the three ways the application can hold its data. In devres the buffer stays on "
+        "the GPU and is passed through H5Pset_comp_native_buffer. In rtrip the application copies it to "
+        "the host first. In hostsim it starts on the host. Blue bars are the VOL. The green bar is the "
+        "filter's native path (devres) and the orange bars its per-chunk path. \"n/a\" means no row."),
+    "5_progressive": (
+        "Progressive (truncated) reads",
+        "One row per (dataset, codec). Left: share of stored bytes actually read against the requested "
+        "percentage (the dashed diagonal is an exact match). Middle: read time on a cold cache, with the "
+        "band showing the min–max over reps. Right: RMSE of the reconstruction (log scale). On the left, "
+        "closer to the diagonal is better; in the middle, lower is faster; on the right, overlapping "
+        "lines mean the same reconstruction quality at that percentage."),
+}
+
+
+def figure_guide(S, vol_prog, filt_prog, made):
+    md = ["## Figure guide\n\n",
+          "For each figure written by this run: how to read it, then what this run's numbers show. "
+          "The numbered sections after this one hold the tables behind each figure.\n\n"]
+    for name in made:
+        key = ("3_decouple" if name.startswith("3_decouple_") else
+               "4_residency" if name.startswith("4_residency_") else name)
+        title, how = GUIDE_TEXT.get(key, (name, ""))
+        comp = name.split("_", 2)[2] if key in ("3_decouple", "4_residency") else None
+        if key == "1_ratio_parity":
+            says = _guide_parity(S)
+        elif key == "2_matrix_time":
+            says = _guide_matrix(S)
+        elif key == "3_decouple":
+            says = _guide_decouple(S, comp)
+        elif key == "4_residency":
+            says = _guide_residency(S, comp)
+        elif key == "5_progressive":
+            says = _guide_progressive(vol_prog, filt_prog)
+        else:
+            says = ""
+        md.append(f"### {title}" + (f": {comp}" if comp else "") + f"  (`{name}.png`)\n\n"
+                  f"![{name}]({name}.png)\n\n**How to read it.** {how}\n\n**What it shows.**\n\n{says}\n\n")
+    return md
+
+
+FAIL_NOTE = (
+    "einspline37 at N=1 is expected to fail: the whole dataset as one HDF5 chunk is over the 4 GiB "
+    "chunk limit, so the harness records it and moves on. Any other row here is a real failure; the "
+    "matching `stdout_*` log in the job folder has the error.\n\n")
+
+
+# ---------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--vol-matrix", action="append", default=[])
@@ -539,14 +789,15 @@ def main():
           "".join(f"- VOL progressive: {d}\n" for d in a.vol_prog) + "\n",
           "Times are wall clock; write = create+write+flush+sync+close+csync, read = open+read (cold cache). "
           "Reps averaged.\n\n"]
-    made = []
-    fig_ratio_parity(S, a.out, made, md)
-    fig_matrix_time(S, a.out, made, md)
-    fig_decouple(S, a.out, made, md, a.decouple_comps.split(","))
-    fig_residency(S, a.out, made, md)
-    fig_progressive(vol_prog, filt_prog, a.out, made, md)
+    made, body = [], []
+    fig_ratio_parity(S, a.out, made, body)
+    fig_matrix_time(S, a.out, made, body)
+    fig_decouple(S, a.out, made, body, a.decouple_comps.split(","))
+    fig_residency(S, a.out, made, body)
+    fig_progressive(vol_prog, filt_prog, a.out, made, body)
+    md += figure_guide(S, vol_prog, filt_prog, made) + body
     if S.fail:
-        md.append("## Recorded failures (rep=-1)\n\n" +
+        md.append("## Recorded failures (rep=-1)\n\n" + FAIL_NOTE +
                   "".join(f"- {s}: {ds} {c} N={n} {arm}\n" for s, ds, c, n, arm in sorted(set(S.fail))) + "\n")
     with open(os.path.join(a.out, "summary.md"), "w") as fh:
         fh.write("".join(md))
