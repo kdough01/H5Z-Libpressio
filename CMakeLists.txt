@@ -83,6 +83,18 @@ check_c_source_compiles("
 #include \"hdf5.h\"
 int main(void) { H5Z_dset_write_func_t w = 0; H5Z_class3_t c; c.dset_write = w; c.dset_read = 0; (void)c; return 0; }"
   H5ZCOMP_HAVE_DSET_IO)
+check_c_source_compiles("
+#include \"hdf5.h\"
+int main(void) { H5Z_pipeline_part_t p = H5Z_PIPELINE_AFTER; (void)p;
+  return (int)(size_t)&H5Zapply_pipeline; }"
+  H5ZCOMP_HAVE_APPLY_PIPELINE)
+check_c_source_compiles("
+#include \"hdf5.h\"
+#ifndef H5_HAVE_PARALLEL
+#error serial HDF5
+#endif
+int main(void) { return 0; }"
+  H5ZCOMP_HDF5_IS_PARALLEL)
 cmake_pop_check_state()
 
 if(NOT H5ZCOMP_HAVE_BLOB_API)
@@ -100,6 +112,9 @@ endif()
 if(H5ZCOMP_HAVE_DSET_IO)
   message(STATUS "HDF5 filter API: dataset-level callbacks (dset_write/dset_read) -> "
                  "native buffers, h5z:group, progressive reads ENABLED")
+  if(H5ZCOMP_HAVE_APPLY_PIPELINE)
+    message(STATUS "HDF5 filter API: H5Zapply_pipeline -> other filters in the pipeline run per unit")
+  endif()
 else()
   message(STATUS "HDF5 filter API: no dataset-level callbacks -> per-chunk filter only "
                  "(native buffers, h5z:group and progressive reads need the patched blob branch)")
@@ -127,6 +142,9 @@ if(H5ZCOMP_HAVE_FILTER_STATE)
 endif()
 if(H5ZCOMP_HAVE_DSET_IO)
   target_compile_definitions(H5Zcomp PRIVATE H5ZCOMP_HAVE_DSET_IO=1)
+endif()
+if(H5ZCOMP_HAVE_APPLY_PIPELINE)
+  target_compile_definitions(H5Zcomp PRIVATE H5ZCOMP_HAVE_APPLY_PIPELINE=1)
 endif()
 if(TARGET PkgConfig::H5ZCOMP_SPERR)
   target_link_libraries(H5Zcomp PRIVATE PkgConfig::H5ZCOMP_SPERR)

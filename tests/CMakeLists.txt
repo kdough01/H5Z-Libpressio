@@ -95,6 +95,18 @@ if(BUILD_EXAMPLES)
   h5zc_add(ci.ex_native_buffer    COMMAND $<TARGET_FILE:ex_native_gpu> noop "{}" malloc LABELS ci)
   h5zc_add(ci.ex_decoupled_chunks COMMAND $<TARGET_FILE:ex_decoupled_chunks> noop "\"_x\":0" LABELS ci)
   h5zc_add(ci.ex_progressive      COMMAND $<TARGET_FILE:ex_progressive>          LABELS ci)
+  # other filters run per unit; several datasets in one request
+  h5zc_add(ci.ex_multi_filter     COMMAND $<TARGET_FILE:ex_multi_filter> noop "\"_x\":0" LABELS ci)
+  h5zc_add(ci.ex_multi_dataset    COMMAND $<TARGET_FILE:ex_multi_dataset> noop "\"_x\":0" LABELS ci)
+  # parallel HDF5: one compression unit per rank, collective write
+  if(TARGET ex_parallel)
+    foreach(np 1 2 4)
+      h5zc_add(mpi.ex_parallel_np${np}
+               COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${np} ${MPIEXEC_PREFLAGS}
+                       $<TARGET_FILE:ex_parallel> noop "\"_x\":0" ${MPIEXEC_POSTFLAGS}
+               LABELS "ci;mpi")
+    endforeach()
+  endif()
 endif()
 
 # harness sanity: lists the matrix + which codecs/datasets are reachable

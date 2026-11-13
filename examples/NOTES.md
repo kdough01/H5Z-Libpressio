@@ -79,3 +79,6 @@ and the callbacks use it, so no `H5Pget_comp_json` call is needed.
 | 3 | config capped at ~1 KB `cd_values` | **closed** — inline ≤ ~60 KiB (autonomous), larger via blob+DXPL; §1 | closed, and blob configs need no app step |
 | 4 | compression unit = storage chunk | open | **closed**: `"h5z:group"`; no 4 GiB cap on a unit |
 | — | progressive / ROI reads | not expressible | `"h5z:progressive"` + `H5Pset_comp_progressive[_roi]` (sperr) |
+| — | other filters in the pipeline | per chunk, as always | once per unit through `H5Zapply_pipeline` (`ex_multi_filter.c`); progressive needs H5Zcomp last |
+| — | `H5Dwrite_multi` / `H5Dread_multi` | per chunk | each dataset to its own path, in one call (`ex_multi_dataset.c`) |
+| — | parallel HDF5 | HDF5's collective filtered write | one unit per rank, chunks written collectively by HDF5 (`ex_parallel.c`) |

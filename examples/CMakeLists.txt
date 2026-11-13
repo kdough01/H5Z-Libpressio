@@ -1,5 +1,6 @@
 foreach(ex ex_roundtrip ex_config_size ex_large_config
-           ex_native_gpu ex_decoupled_chunks ex_progressive)
+           ex_native_gpu ex_decoupled_chunks ex_progressive
+           ex_multi_filter ex_multi_dataset)
   add_executable(${ex} ${ex}.c)
   target_link_libraries(${ex} PRIVATE H5Zcomp m)
 endforeach()
@@ -15,5 +16,15 @@ if(USE_CUDA)
     message(STATUS "ex_native_gpu: CUDA device buffers enabled")
   else()
     message(STATUS "ex_native_gpu: CUDA toolkit not found, building the host stand-in")
+  endif()
+endif()
+
+# ex_parallel needs a parallel HDF5 (H5_HAVE_PARALLEL) and MPI.
+if(H5ZCOMP_HDF5_IS_PARALLEL)
+  find_package(MPI COMPONENTS C)
+  if(MPI_C_FOUND)
+    add_executable(ex_parallel ex_parallel.c)
+    target_link_libraries(ex_parallel PRIVATE H5Zcomp MPI::MPI_C m)
+    message(STATUS "ex_parallel: parallel HDF5 + MPI found, building the MPI example")
   endif()
 endif()

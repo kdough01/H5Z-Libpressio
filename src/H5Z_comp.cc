@@ -954,11 +954,23 @@ static htri_t H5Z_comp_can_apply(hid_t dcpl_id, hid_t type_id, hid_t space_id) {
                         cid.c_str());
                 goto done;
             }
-            if (H5Pget_nfilters(dcpl_id) != 1) {
-                fprintf(stderr, "[H5Z_comp] \"h5z:group\" / \"h5z:progressive\" require H5Zcomp to be "
-                        "the only filter in the pipeline\n");
+#ifdef H5ZCOMP_HAVE_APPLY_PIPELINE
+            /* Other filters run once per unit (H5Zapply_pipeline). A filter
+             * AFTER the codec rewrites the stream, so a prefix of what is
+             * stored is no longer a prefix of the codec's stream. */
+            if (h5z.progressive && comp_pipeline_index(dcpl_id) != H5Pget_nfilters(dcpl_id) - 1) {
+                fprintf(stderr, "[H5Z_comp] \"h5z:progressive\" requires H5Zcomp to be the last filter "
+                        "in the pipeline: a filter after the codec rewrites its stream, so a prefix "
+                        "can no longer be decoded\n");
                 goto done;
             }
+#else
+            if (H5Pget_nfilters(dcpl_id) != 1) {
+                fprintf(stderr, "[H5Z_comp] \"h5z:group\" / \"h5z:progressive\" require H5Zcomp to be "
+                        "the only filter in the pipeline (this HDF5 has no H5Zapply_pipeline)\n");
+                goto done;
+            }
+#endif
 #endif
         }
         ret = 1;
@@ -1060,6 +1072,8 @@ struct comp_state {
     int                rank  = 0;
     hsize_t            chunk[H5S_MAX_RANK];
     comp_h5z_cfg       h5z;
+    unsigned           pidx  = 0;       /* our index in the dataset's pipeline    */
+    int                nfilt = 1;       /* filters in the pipeline                */
     comp_ctx          *ctx = NULL;      /* codec, built on first use              */
     ~comp_state() { comp_ctx_free(ctx); }
 };
@@ -1105,6 +1119,9 @@ static herr_t H5Z_comp_init(hid_t file_id, hid_t dcpl_id, hid_t type_id, hid_t s
             free(pid); free(pjson);
         }
         if (have) {
+            st->pidx  = idx;
+            st->nfilt = H5Pget_nfilters(dcpl_id);
+            if (st->nfilt < 1) st->nfilt = 1;
             st->dtype = comp_hdf5_to_pressio_dtype(type_id);
             st->esize = H5Tget_size(type_id);
             /* space_id is the chunk shape. (The DCPL's own layout is not
@@ -1195,6 +1212,8 @@ struct comp_req {
     hid_t       dset = -1;
     bool        write = false, must = false;   /* must: cannot fall back to the per-chunk path */
     bool        grouped = false, native = false, has_prog = false;
+    bool        before = false, after = false;   /* other filters before / after ours */
+    hid_t       dxpl = H5P_DEFAULT;
     char        domain[H5Z_COMP_DOMAIN_MAX];
     comp_prog_prop prog;
     int         rank = 0;
@@ -1211,6 +1230,9 @@ static htri_t comp_req_setup(comp_req &r, void *state, hid_t dset_id, hid_t mem_
     if (!st || !st->valid) return 0;
     r.st = st; r.dset = dset_id; r.write = write; r.rank = st->rank;
     r.grouped = st->h5z.grouped;
+    r.dxpl    = dxpl_id;
+    r.before  = st->pidx > 0;
+    r.after   = (int)st->pidx + 1 < st->nfilt;
 
     memset(r.domain, 0, sizeof(r.domain));
     r.native = comp_dxpl_get(dxpl_id, H5Z_COMP_DXPL_NATIVE, r.domain, sizeof(r.domain)) && r.domain[0];
@@ -1227,9 +1249,24 @@ static htri_t comp_req_setup(comp_req &r, void *state, hid_t dset_id, hid_t mem_
     /* A grouped dataset has no per-chunk representation, and HDF5 cannot
      * dereference a native buffer: for those, declining is not an option. */
     r.must = r.grouped || r.native;
+#ifndef H5ZCOMP_HAVE_APPLY_PIPELINE
+    /* Without H5Zapply_pipeline the other filters could not run here. (A
+     * grouped dataset cannot have them: can_apply refused it.) */
+    if ((r.before || r.after) && !r.must) return 0;
+#endif
 #define COMP_BAIL(...) do { if (!r.must && !r.has_prog) return 0; \
                             fprintf(stderr, "[H5Z_comp] " __VA_ARGS__); return -1; } while (0)
 
+    if (r.native && r.before) {
+        fprintf(stderr, "[H5Z_comp] native buffer: the dataset has a filter before H5Zcomp, which runs "
+                "on the host -- use a host buffer, or put H5Zcomp first in the pipeline\n");
+        return -1;
+    }
+    if (r.has_prog && r.after) {
+        fprintf(stderr, "[H5Z_comp] progressive read: the dataset has a filter after H5Zcomp, so a prefix "
+                "of the stored stream is not a prefix of the codec's stream -- read it whole\n");
+        return -1;
+    }
     if (r.has_prog && !st->h5z.progressive) {
         fprintf(stderr, "[H5Z_comp] progressive read requested, but this dataset was not written "
                 "with \"h5z:progressive\":true -- its streams cannot be truncated safely\n");
@@ -1412,8 +1449,37 @@ static void comp_unit_members(const comp_req &r, const comp_unit &u, std::vector
     }
 }
 
-/* Raw stored bytes of one chunk. 1 read, 0 never written, -1 error. */
-static int comp_read_chunk(hid_t dset, const hsize_t *offset, std::vector<unsigned char> &buf) {
+/* Run the pipeline entries before or after ours on one buffer (forward on
+ * write, H5Z_FLAG_REVERSE on read): the whole pipeline then runs once per
+ * compression unit. MASK: in, entries to skip; out, entries skipped. */
+static int comp_apply(const comp_req &r, int after, unsigned flags, const hsize_t *scaled, unsigned *mask,
+                      const void *in, size_t n, std::vector<unsigned char> &out) {
+#ifdef H5ZCOMP_HAVE_APPLY_PIPELINE
+    size_t cap = n ? n : 1, nb = n;
+    void  *b   = H5allocate_memory(cap, false);
+    if (!b) return -1;
+    memcpy(b, in, n);
+    herr_t rc = H5Zapply_pipeline(r.dset, after ? H5Z_PIPELINE_AFTER : H5Z_PIPELINE_BEFORE, flags, r.dxpl,
+                                  scaled, mask, &nb, &cap, &b);
+    if (rc >= 0) out.assign((const unsigned char *)b, (const unsigned char *)b + nb);
+    H5free_memory(b);
+    if (rc < 0) fprintf(stderr, "[H5Z_comp] the filters %s H5Zcomp failed\n", after ? "after" : "before");
+    return rc < 0 ? -1 : 0;
+#else
+    (void)r; (void)after; (void)flags; (void)scaled; (void)mask; (void)in; (void)n; (void)out;
+    return -1;
+#endif
+}
+
+/* Scaled (chunk-index) coordinates of the chunk at element offset OFF. */
+static void comp_scaled(const comp_req &r, const hsize_t *off, hsize_t *scaled) {
+    for (int d = 0; d < r.rank; d++) scaled[d] = off[d] / r.st->chunk[d];
+}
+
+/* Raw stored bytes of one chunk. 1 read, 0 never written, -1 error. MASK_OUT
+ * (optional) receives the chunk's filter mask. */
+static int comp_read_chunk(hid_t dset, const hsize_t *offset, std::vector<unsigned char> &buf,
+                           unsigned *mask_out = NULL) {
     /* (Also flushes a dirty cached copy of the chunk, so the size is current.
      * H5Dget_chunk_storage_size would fail for a chunk that does not exist.) */
     hsize_t stored = 0; haddr_t addr = HADDR_UNDEF; unsigned fmask = 0;
@@ -1422,6 +1488,7 @@ static int comp_read_chunk(hid_t dset, const hsize_t *offset, std::vector<unsign
     buf.resize((size_t)stored);
     uint32_t mask = 0; size_t sz = buf.size();
     if (H5Dread_chunk2(dset, H5P_DEFAULT, offset, &mask, buf.data(), &sz) < 0 || sz != buf.size()) return -1;
+    if (mask_out) *mask_out = mask;
     g_io.chunks++; g_io.bytes_io += sz;
     return 1;
 }
@@ -1525,7 +1592,7 @@ static htri_t H5Z_comp_dset_write(void *state, hid_t dset_id, hid_t mem_type_id,
         comp_ctx *x = comp_state_ctx(st);
         if (!x) return -1;
 
-        std::vector<unsigned char> scratch, seg, hdr;
+        std::vector<unsigned char> scratch, seg, hdr, pre, post;
         std::vector<std::vector<hsize_t> > members;
         for (size_t i = 0; i < units.size(); i++) {
             const comp_unit &u = units[i];
@@ -1546,6 +1613,23 @@ static htri_t H5Z_comp_dset_write(void *state, hid_t dset_id, hid_t mem_type_id,
             }
             if (st->h5z.progressive && x->id == "sperr" && comp_pin_sperr_chunks(x, r.rank, u.cdims) < 0) return -1;
 
+            /* The filters before ours run on the unit's data (an ungrouped
+             * unit is one chunk, so the stored bytes are exactly those of the
+             * per-chunk pipeline). */
+            hsize_t scaled[H5S_MAX_RANK];
+            comp_scaled(r, u.start, scaled);
+            const hsize_t *sc   = r.grouped ? NULL : scaled;
+            unsigned       mask = 0;
+            if (r.before) {
+                if (comp_apply(r, 0, 0, sc, &mask, src, nbytes, pre) < 0) return -1;
+                if (pre.size() != nbytes) {
+                    fprintf(stderr, "[H5Z_comp] the filters before H5Zcomp changed the data size (%zu -> %zu B); "
+                            "only size-preserving filters such as shuffle can precede it\n", nbytes, pre.size());
+                    return -1;
+                }
+                src = pre.data();
+            }
+
             size_t dims[H5S_MAX_RANK];
             for (int d = 0; d < r.rank; d++) dims[d] = (size_t)u.cdims[d];
             size_t len = 0;
@@ -1554,12 +1638,19 @@ static htri_t H5Z_comp_dset_write(void *state, hid_t dset_id, hid_t mem_type_id,
             const unsigned char *stream = (const unsigned char *)pressio_data_ptr(out, NULL);
             herr_t st_w = 0;
 
+            /* The filters after ours run on the unit's stream. */
+            if (r.after) {
+                if (comp_apply(r, 1, 0, sc, &mask, stream, len, post) < 0) { pressio_data_free(out); return -1; }
+                stream = post.data();
+                len    = post.size();
+            }
+
             if (!r.grouped) {
                 if (len >= ((size_t)1 << 32)) {
                     fprintf(stderr, "[H5Z_comp] '%s' produced %zu B for one chunk; HDF5 cannot store a filtered "
                             "chunk >= 4 GiB -- use \"h5z:group\" with smaller chunks\n", x->id.c_str(), len);
                     st_w = -1;
-                } else st_w = H5Dwrite_chunk(dset_id, H5P_DEFAULT, 0, u.start, len, stream);
+                } else st_w = H5Dwrite_chunk(dset_id, H5P_DEFAULT, mask, u.start, len, stream);
                 g_io.chunks++; g_io.bytes_io += len; g_io.bytes_stored += len;
             } else {
                 /* Stripe the stream over the unit's member chunks. No member
@@ -1581,7 +1672,7 @@ static htri_t H5Z_comp_dset_write(void *state, hid_t dset_id, hid_t mem_type_id,
                         fprintf(stderr, "[H5Z_comp] a segment of %zu B exceeds the 4 GiB chunk limit\n", seg.size());
                         st_w = -1; break;
                     }
-                    st_w = H5Dwrite_chunk(dset_id, H5P_DEFAULT, 0, members[k].data(), seg.size(), seg.data());
+                    st_w = H5Dwrite_chunk(dset_id, H5P_DEFAULT, mask, members[k].data(), seg.size(), seg.data());
                     g_io.chunks++; g_io.bytes_io += seg.size(); g_io.bytes_stored += seg.size();
                 }
             }
@@ -1620,7 +1711,7 @@ static htri_t H5Z_comp_dset_read(void *state, hid_t dset_id, hid_t mem_type_id, 
         comp_ctx *x = comp_state_ctx(st);
         if (!x) return -1;
 
-        std::vector<unsigned char> stream, part, trunc, scratch, fill;
+        std::vector<unsigned char> stream, part, trunc, scratch, fill, post, dec, undo;
         std::vector<std::vector<hsize_t> > members;
         for (size_t i = 0; i < units.size(); i++) {
             const comp_unit &u = units[i];
@@ -1628,17 +1719,21 @@ static htri_t H5Z_comp_dset_read(void *state, hid_t dset_id, hid_t mem_type_id, 
             const unsigned pct    = comp_unit_pct(r, u);
             size_t have = 0, total = 0;
             bool   missing = false;
+            unsigned mask = 0;   /* filters skipped when the unit was written */
+            hsize_t  scaled[H5S_MAX_RANK];
+            comp_scaled(r, u.start, scaled);
+            const hsize_t *sc = r.grouped ? NULL : scaled;
 
             /* 1. fetch the unit's stream, or as much of it as this read wants */
             if (!r.grouped) {
-                int rc = comp_read_chunk(dset_id, u.start, stream);
+                int rc = comp_read_chunk(dset_id, u.start, stream, &mask);
                 if (rc < 0) return -1;
                 missing = (rc == 0);
                 have = total = stream.size();
                 g_io.bytes_stored += total;
             } else {
                 comp_unit_members(r, u, members);
-                int rc = comp_read_chunk(dset_id, members[0].data(), part);
+                int rc = comp_read_chunk(dset_id, members[0].data(), part, &mask);
                 if (rc < 0) return -1;
                 if (rc == 1 && part.size() == 8 && comp_get(part.data(), 4) == H5Z_COMP_FILL_MAGIC) rc = 0;
                 if (rc == 0) missing = true;
@@ -1672,6 +1767,14 @@ static htri_t H5Z_comp_dset_read(void *state, hid_t dset_id, hid_t mem_type_id, 
                     if (stream.size() < have) { fprintf(stderr, "[H5Z_comp] compression unit stream is short\n"); return -1; }
                     g_io.bytes_stored += total + (uint64_t)h.nsegs * hs;
                 }
+            }
+
+            /* Undo the filters after ours (the whole stream: comp_req_setup
+             * refuses a progressive read of such a dataset). */
+            if (!missing && r.after) {
+                if (comp_apply(r, 1, H5Z_FLAG_REVERSE, sc, &mask, stream.data(), have, post) < 0) return -1;
+                stream.swap(post);
+                have = total = stream.size();
             }
 
             /* 2. where the decoded unit goes */
@@ -1709,7 +1812,22 @@ static htri_t H5Z_comp_dset_read(void *state, hid_t dset_id, hid_t mem_type_id, 
                 }
                 size_t dims[H5S_MAX_RANK];
                 for (int d = 0; d < r.rank; d++) dims[d] = (size_t)u.cdims[d];
-                if (comp_decompress_core(x, sp, sl, (size_t)r.rank, dims, dst, nbytes, domain) != 0) return -1;
+                if (!r.before) {
+                    if (comp_decompress_core(x, sp, sl, (size_t)r.rank, dims, dst, nbytes, domain) != 0) return -1;
+                } else {
+                    /* Decode, then undo the filters before ours (host memory:
+                     * comp_req_setup refuses a native buffer here). */
+                    dec.resize(nbytes);
+                    if (comp_decompress_core(x, sp, sl, (size_t)r.rank, dims, dec.data(), nbytes, "malloc") != 0)
+                        return -1;
+                    if (comp_apply(r, 0, H5Z_FLAG_REVERSE, sc, &mask, dec.data(), nbytes, undo) < 0) return -1;
+                    if (undo.size() != nbytes) {
+                        fprintf(stderr, "[H5Z_comp] the filters before H5Zcomp returned %zu B, expected %zu B\n",
+                                undo.size(), nbytes);
+                        return -1;
+                    }
+                    memcpy(dst, undo.data(), nbytes);
+                }
             }
 
             /* 4. deliver the selected part */
