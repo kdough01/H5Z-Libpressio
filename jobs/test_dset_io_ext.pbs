@@ -71,7 +71,9 @@ command -v mpicc >/dev/null && command -v mpiexec >/dev/null || {
 need=3.26; have=$(cmake --version | awk 'NR==1{print $3}')
 [ "$(printf '%s\n' "$need" "$have" | sort -V | head -1)" = "$need" ] || {
     echo "ERROR: cmake $have < $need"; exit 1; }
-echo "cmake $have   mpicc $(command -v mpicc)   mpiexec $(command -v mpiexec)"
+# Full paths: h5zc_build strips Spack views from PATH, where mpicc may live
+MPICC=$(command -v mpicc); MPICXX=$(command -v mpicxx || command -v mpic++)
+echo "cmake $have   mpicc $MPICC   mpiexec $(command -v mpiexec)"
 
 {
     echo "H5Z-Libpressio $(git -C "$ROOT" log -1 --oneline)"
@@ -97,7 +99,7 @@ if [ -z "${SKIP_HDF5:-}" ]; then
     step hdf5_ser_tests ctest --test-dir "$H5SER" --output-on-failure \
         -R "H5TEST-(tfilter2|dsets|direct_chunk|set_extent|objcopy|select_io_dset)$|H5PLUGIN-filter_plugin"
 
-    step hdf5_par_build bash -c "CC=mpicc cmake -S '$HDF5_SRC' -B '$H5PAR' ${H5OPTS[*]} -DCMAKE_INSTALL_PREFIX='$PREFIX_PAR' \
+    step hdf5_par_build bash -c "CC='$MPICC' cmake -S '$HDF5_SRC' -B '$H5PAR' ${H5OPTS[*]} -DCMAKE_INSTALL_PREFIX='$PREFIX_PAR' \
         -DHDF5_ENABLE_PARALLEL=ON -DHDF5_TEST_PARALLEL=ON -DHDF5_TEST_SERIAL=OFF \
         && cmake --build '$H5PAR' -j $JOBS && cmake --install '$H5PAR'" || { echo "ERROR: parallel HDF5 build failed"; exit 1; }
     for np in 1 2 4; do
@@ -117,7 +119,7 @@ ZPAR="$ROOT/build_ext_par_$TAG"
 step filter_ser bash -c "export HDF5_BLOB='$PREFIX_SER'; source scripts/env.sh >/dev/null && h5zc_build '$ZSER' \
     && ctest --test-dir '$ZSER' -L ci --output-on-failure"
 step filter_par bash -c "export HDF5_BLOB='$PREFIX_PAR'; source scripts/env.sh >/dev/null && \
-    CC=mpicc CXX=mpicxx h5zc_build '$ZPAR' && ctest --test-dir '$ZPAR' -L ci --output-on-failure"
+    CC='$MPICC' CXX='$MPICXX' h5zc_build '$ZPAR' && ctest --test-dir '$ZPAR' -L ci --output-on-failure"
 
 # ---------------------------------------------------------------------------
 # 5. the new examples with a real codec (each run in its own directory)
