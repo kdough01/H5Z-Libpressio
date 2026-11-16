@@ -1,0 +1,149 @@
+#!/bin/bash
+#PBS -N h5zcomp_dsetio_ext
+#PBS -l select=1:ncpus=16:ngpus=1:mpiprocs=4
+#PBS -l walltime=03:30:00
+#PBS -j oe
+#PBS -A SDR
+#PBS -q backfill
+#
+# Builds and tests the dataset-level filter callbacks end to end:
+#
+#   1. HDF5 (hdf5-blob-extensions, branch blob-dset-io), serial, with tests
+#        -> tfilter2 (dataset-level cases), dsets, direct_chunk, set_extent,
+#           objcopy, select_io_dset, filter_plugin
+#   2. HDF5, parallel (mpicc, HDF5_ENABLE_PARALLEL), with tests
+#        -> testpar/t_filter_dset_io on 1, 2 and 4 ranks
+#        -> (RUN_TFP=1) t_filters_parallel on 2 ranks; stops at the blob
+#           branch's par-blob-05, which fails on the unmodified branch too
+#   3. H5Zcomp against the serial HDF5    -> ctest -L ci
+#   4. H5Zcomp against the parallel HDF5  -> ctest -L ci (adds mpi.ex_parallel_np1/2/4)
+#   5. The new examples with sz3: ex_multi_filter, ex_multi_dataset,
+#      ex_parallel on 4 ranks
+#   6. (USE_CUDA=1) ctest -L gpu: native device buffers with cuszp
+#
+# Submit from the H5Z-Libpressio repo root, after `git pull` in BOTH repos:
+#
+#   source scripts/env.sh                  # + your SPERR exports, as for vol_compare
+#   qsub -V jobs/test_dset_io_ext.pbs
+#   USE_CUDA=1 RUN_TFP=1 qsub -V jobs/test_dset_io_ext.pbs
+#
+# Knobs (environment, passed with -V):
+#   HDF5_SRC     HDF5 checkout     (default $HOME/src/hdf5-blob-dset-io)
+#   PREFIX_SER   serial install    (default $HOME/sw/hdf5-blob-dset-io)
+#   PREFIX_PAR   parallel install  (default $HOME/sw/hdf5-blob-dset-io-par)
+#   MPI_MODULE   module providing mpicc/mpiexec (default: try openmpi, then mpich)
+#   SKIP_HDF5=1  reuse the installed HDF5s; only rebuild and test the filter
+#   JOBS         parallel build jobs (default 16)
+set -u
+cd "${PBS_O_WORKDIR:-$(pwd)}"
+[ -f CMakeLists.txt ] || cd ..
+ROOT=$(pwd)
+JOBS="${JOBS:-16}"
+TAG="${PBS_JOBID:-local}"; TAG="${TAG%%.*}"
+HDF5_SRC="${HDF5_SRC:-$HOME/src/hdf5-blob-dset-io}"
+PREFIX_SER="${PREFIX_SER:-$HOME/sw/hdf5-blob-dset-io}"
+PREFIX_PAR="${PREFIX_PAR:-$HOME/sw/hdf5-blob-dset-io-par}"
+LOGDIR="$ROOT/results/dsetio_ext_$TAG"
+mkdir -p "$LOGDIR"
+echo "Job started $(date) on $(hostname)"
+echo "logs: $LOGDIR"
+
+declare -A RC
+step () {   # step NAME cmd...   -> runs, logs to $LOGDIR/NAME.log, records the exit code
+    local name=$1; shift
+    echo; echo "=== $name ==="
+    ( "$@" ) > "$LOGDIR/$name.log" 2>&1
+    RC[$name]=$?
+    tail -n 25 "$LOGDIR/$name.log"
+    echo "--- $name: exit ${RC[$name]}"
+    return ${RC[$name]}
+}
+
+# ---------------------------------------------------------------------------
+# toolchain
+# ---------------------------------------------------------------------------
+module load gcc/11.4.0 2>/dev/null || true
+module load cmake      2>/dev/null || true
+if [ -n "${MPI_MODULE:-}" ]; then module load "$MPI_MODULE"
+else module load openmpi 2>/dev/null || module load mpich 2>/dev/null || true; fi
+command -v mpicc >/dev/null && command -v mpiexec >/dev/null || {
+    echo "ERROR: no mpicc/mpiexec -- set MPI_MODULE (see 'module avail')"; exit 1; }
+need=3.26; have=$(cmake --version | awk 'NR==1{print $3}')
+[ "$(printf '%s\n' "$need" "$have" | sort -V | head -1)" = "$need" ] || {
+    echo "ERROR: cmake $have < $need"; exit 1; }
+echo "cmake $have   mpicc $(command -v mpicc)   mpiexec $(command -v mpiexec)"
+
+{
+    echo "H5Z-Libpressio $(git -C "$ROOT" log -1 --oneline)"
+    echo "HDF5           $(git -C "$HDF5_SRC" log -1 --oneline 2>/dev/null || echo "?? $HDF5_SRC")"
+    echo "host $(hostname)  $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)"
+} | tee "$LOGDIR/provenance.txt"
+grep -q H5Zapply_pipeline "$HDF5_SRC/src/H5Zdevelop.h" 2>/dev/null || {
+    echo "ERROR: $HDF5_SRC has no H5Zapply_pipeline -- git pull the blob-dset-io branch there first"; exit 1; }
+
+# ---------------------------------------------------------------------------
+# 1-2. HDF5, serial and parallel, with their tests
+# ---------------------------------------------------------------------------
+H5OPTS=(-DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DBUILD_SHARED_LIBS=ON
+        -DHDF5_BUILD_FORTRAN=OFF -DHDF5_BUILD_CPP_LIB=OFF -DHDF5_BUILD_HL_LIB=OFF
+        -DHDF5_BUILD_JAVA=OFF -DHDF5_BUILD_EXAMPLES=OFF -DHDF5_BUILD_TOOLS=ON
+        -DHDF5_ENABLE_SZIP_SUPPORT=OFF -DHDF5_ENABLE_ZLIB_SUPPORT=ON)
+H5SER="$HDF5_SRC/build-ser"
+H5PAR="$HDF5_SRC/build-par"
+
+if [ -z "${SKIP_HDF5:-}" ]; then
+    step hdf5_ser_build bash -c "cmake -S '$HDF5_SRC' -B '$H5SER' ${H5OPTS[*]} -DCMAKE_INSTALL_PREFIX='$PREFIX_SER' \
+        && cmake --build '$H5SER' -j $JOBS && cmake --install '$H5SER'" || { echo "ERROR: serial HDF5 build failed"; exit 1; }
+    step hdf5_ser_tests ctest --test-dir "$H5SER" --output-on-failure \
+        -R "H5TEST-(tfilter2|dsets|direct_chunk|set_extent|objcopy|select_io_dset)$|H5PLUGIN-filter_plugin"
+
+    step hdf5_par_build bash -c "CC=mpicc cmake -S '$HDF5_SRC' -B '$H5PAR' ${H5OPTS[*]} -DCMAKE_INSTALL_PREFIX='$PREFIX_PAR' \
+        -DHDF5_ENABLE_PARALLEL=ON -DHDF5_TEST_PARALLEL=ON -DHDF5_TEST_SERIAL=OFF \
+        && cmake --build '$H5PAR' -j $JOBS && cmake --install '$H5PAR'" || { echo "ERROR: parallel HDF5 build failed"; exit 1; }
+    for np in 1 2 4; do
+        step hdf5_par_t_filter_dset_io_np$np bash -c "cd '$H5PAR/testpar' && mpiexec -n $np '$H5PAR/bin/t_filter_dset_io'"
+    done
+    if [ -n "${RUN_TFP:-}" ]; then
+        step hdf5_par_t_filters_parallel_np2 bash -c "cd '$H5PAR/testpar' && mpiexec -n 2 '$H5PAR/bin/t_filters_parallel'"
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# 3-4. H5Zcomp against each HDF5
+# ---------------------------------------------------------------------------
+ZSER="$ROOT/build_ext_ser_$TAG"
+ZPAR="$ROOT/build_ext_par_$TAG"
+
+step filter_ser bash -c "export HDF5_BLOB='$PREFIX_SER'; source scripts/env.sh >/dev/null && h5zc_build '$ZSER' \
+    && ctest --test-dir '$ZSER' -L ci --output-on-failure"
+step filter_par bash -c "export HDF5_BLOB='$PREFIX_PAR'; source scripts/env.sh >/dev/null && \
+    CC=mpicc CXX=mpicxx h5zc_build '$ZPAR' && ctest --test-dir '$ZPAR' -L ci --output-on-failure"
+
+# ---------------------------------------------------------------------------
+# 5. the new examples with a real codec (each run in its own directory)
+# ---------------------------------------------------------------------------
+SZ='"pressio:abs":1e-3'
+mkdir -p "$LOGDIR/run"
+step ex_multi_filter  bash -c "export HDF5_BLOB='$PREFIX_SER'; source scripts/env.sh >/dev/null; cd '$LOGDIR/run' && '$ZSER/bin/ex_multi_filter' sz3 '$SZ'"
+step ex_multi_dataset bash -c "export HDF5_BLOB='$PREFIX_SER'; source scripts/env.sh >/dev/null; cd '$LOGDIR/run' && '$ZSER/bin/ex_multi_dataset' sz3 '$SZ'"
+step ex_parallel_np4  bash -c "export HDF5_BLOB='$PREFIX_PAR'; source scripts/env.sh >/dev/null; cd '$LOGDIR/run' && mpiexec -n 4 '$ZPAR/bin/ex_parallel' sz3 '$SZ'"
+
+# ---------------------------------------------------------------------------
+# 6. GPU (native device buffers)
+# ---------------------------------------------------------------------------
+if [ -n "${USE_CUDA:-}" ]; then
+    ZGPU="$ROOT/build_ext_gpu_$TAG"
+    step filter_gpu bash -c "export HDF5_BLOB='$PREFIX_SER'; source scripts/env.sh >/dev/null && \
+        USE_CUDA=1 h5zc_build '$ZGPU' && ctest --test-dir '$ZGPU' -L gpu --output-on-failure"
+fi
+
+# ---------------------------------------------------------------------------
+echo; echo "=== summary ($LOGDIR) ==="
+fail=0
+for k in $(printf '%s\n' "${!RC[@]}" | sort); do
+    printf '  %-36s %s\n' "$k" "$([ "${RC[$k]}" -eq 0 ] && echo ok || echo "FAILED (${RC[$k]})")"
+    [ "${RC[$k]}" -eq 0 ] || fail=1
+done | tee "$LOGDIR/summary.txt"
+grep -q FAILED "$LOGDIR/summary.txt" && fail=1
+echo "Job finished $(date)"
+exit $fail
