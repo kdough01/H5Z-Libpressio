@@ -96,17 +96,21 @@ H5PAR="$HDF5_SRC/build-par"
 if [ -z "${SKIP_HDF5:-}" ]; then
     step hdf5_ser_build bash -c "cmake -S '$HDF5_SRC' -B '$H5SER' ${H5OPTS[*]} -DCMAKE_INSTALL_PREFIX='$PREFIX_SER' \
         && cmake --build '$H5SER' -j $JOBS && cmake --install '$H5SER'" || { echo "ERROR: serial HDF5 build failed"; exit 1; }
-    step hdf5_ser_tests ctest --test-dir "$H5SER" --output-on-failure \
-        -R "H5TEST-(tfilter2|dsets|direct_chunk|set_extent|objcopy|select_io_dset)$|H5PLUGIN-filter_plugin"
+    # Each build's own libhdf5 first: an LD_LIBRARY_PATH inherited through -V
+    # (scripts/env.sh) would otherwise load an older installed HDF5.
+    step hdf5_ser_tests env LD_LIBRARY_PATH="$H5SER/bin:${LD_LIBRARY_PATH:-}" ctest --test-dir "$H5SER" --output-on-failure \
+        -R "H5TEST-(tfilter2|dsets|direct_chunk|set_extent|select_io_dset)$|H5TESTXPR-objcopy$|H5PLUGIN-filter_plugin"
 
     step hdf5_par_build bash -c "CC='$MPICC' cmake -S '$HDF5_SRC' -B '$H5PAR' ${H5OPTS[*]} -DCMAKE_INSTALL_PREFIX='$PREFIX_PAR' \
         -DHDF5_ENABLE_PARALLEL=ON -DHDF5_TEST_PARALLEL=ON -DHDF5_TEST_SERIAL=OFF \
         && cmake --build '$H5PAR' -j $JOBS && cmake --install '$H5PAR'" || { echo "ERROR: parallel HDF5 build failed"; exit 1; }
     for np in 1 2 4; do
-        step hdf5_par_t_filter_dset_io_np$np bash -c "cd '$H5PAR/testpar' && mpiexec -n $np '$H5PAR/bin/t_filter_dset_io'"
+        step hdf5_par_t_filter_dset_io_np$np bash -c "cd '$H5PAR/testpar' && \
+            LD_LIBRARY_PATH='$H5PAR/bin':\${LD_LIBRARY_PATH:-} mpiexec -x LD_LIBRARY_PATH -n $np '$H5PAR/bin/t_filter_dset_io'"
     done
     if [ -n "${RUN_TFP:-}" ]; then
-        step hdf5_par_t_filters_parallel_np2 bash -c "cd '$H5PAR/testpar' && mpiexec -n 2 '$H5PAR/bin/t_filters_parallel'"
+        step hdf5_par_t_filters_parallel_np2 bash -c "cd '$H5PAR/testpar' && \
+            LD_LIBRARY_PATH='$H5PAR/bin':\${LD_LIBRARY_PATH:-} mpiexec -x LD_LIBRARY_PATH -n 2 '$H5PAR/bin/t_filters_parallel'"
     fi
 fi
 
